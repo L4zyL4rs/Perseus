@@ -42,5 +42,7 @@
 
 # Other folders
 .vs
+.cache
+.continue
 out
 build
