@@ -24,5 +24,5 @@ add_executable(sandbox "apps/sandbox/templating.cpp" "include/ecs/EntityBuilder.
 target_link_libraries(sandbox PRIVATE ecs scheduler systems config)
 
 # testECS app
-add_executable(testECS tests/ecs/testECS.cpp "include/ecs/EntityBuilder.h"  "include/ecs/Registry.h" "include/systems/systemBase.h" "include/config/config.h" "apps/sandbox/main.cpp" "include/systems/testSystem1.h" "include/systems/testSystem2.h")
+add_executable(testECS "tests/ecs/testECS.cpp" "include/ecs/EntityBuilder.h"  "include/ecs/Registry.h" "include/systems/systemBase.h" "include/config/config.h" "include/systems/testSystem1.h" "include/systems/testSystem2.h")
 target_link_libraries(testECS PRIVATE ecs scheduler systems config)

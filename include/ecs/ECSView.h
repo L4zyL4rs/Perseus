@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <stdexcept>
 #include <array>
-#include "EntityBuilder.h"
+#include "EntityManager.h"
 #include "Meta.h"
 
 namespace ecs {
@@ -102,7 +102,7 @@ namespace ecs {
 			Iterator operator++() {
 				//std::cout << "Starting with " << *this << "For archetype size " << view->archetypes->size() << "\n";
 				currentEntity++;
-
+				//std::cout << "storage sizes: " << view->storageSizes[archetypeIndex] << "\n";
 				if (currentEntity <= view->storageSizes[archetypeIndex]) {
 					return *this;
 				}
@@ -171,6 +171,13 @@ namespace ecs {
 			it.currentEntity = 0;
 			it.archetypeIndex = 0;
 			it.iteratorVersion = this->version;
+			
+			while (storageSizes[it.archetypeIndex] == UINT32_MAX) {
+				it.archetypeIndex++;
+				if(it.archetypeIndex == archetypes->size()) {
+					break;
+				}
+			}
 
 			return it;
 		}
@@ -322,9 +329,9 @@ namespace ecs {
 			void update(const std::vector<Archetype*>* archetypes) {
 				sizes.resize(archetypes->size());
 				for (int i = 0; i < sizes.size(); i++) {
-					//std::cout << "Size of sizes " << sizes.size() << "\n";
+					std::cout << "Size of sizes " << sizes.size() << "\n";
 					sizes[i] = (*archetypes)[i]->storageQueue.highestID;
-					//std::cout << "Registered size of " << sizes[i] << "\n";
+					std::cout << "Registered size of " << sizes[i] << "\n";
 				}
 			}
 		}; 

@@ -1,6 +1,6 @@
 #pragma once
-#include <cstdio>
 #include "systemBase.h"
+#include "ECSView.h"
 #include "Components.h"
 
 class EntityPrinter : public ISystem {

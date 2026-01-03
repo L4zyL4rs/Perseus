@@ -2,8 +2,8 @@
 #include <unordered_map>
 #include <bitset>
 #include <assert.h>
-#include <algorithm>
-#include <type_traits>
+//#include <algorithm>
+//#include <type_traits>
 #include <iostream>
 //#include "Components.h"
 #include "Registry.h"

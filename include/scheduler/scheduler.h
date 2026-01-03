@@ -1,14 +1,14 @@
 #include <vector>
-#include <bitset>
-#include <functional>
-#include "config.h"
+// #include <bitset>
+// #include <functional>
+// #include "config.h"
 #include "systemBase.h"
 
 extern const size_t MAX_COMPONENTS;
 
 class Scheduler {
 public:
-	Scheduler(ecs::EntityManager manager) : em(manager) {}
+	Scheduler(ecs::EntityManager& manager) : em(manager) {}
 	ecs::EntityManager& em;
 	std::vector<ISystem*> systems;
 	std::vector<std::vector<ecs::EntityBuilder>*> commandQueue;

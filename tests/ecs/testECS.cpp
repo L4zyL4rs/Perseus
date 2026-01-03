@@ -1,6 +1,7 @@
 ﻿#include <cassert>
 #include <iostream>
 #include "ECSView.h"
+#include "EntityBuilder.h"
 
 // This has been blatantly vibecoded, but tests the necessary functions
 
@@ -116,12 +117,15 @@ int main() {
 
     // === Optional: iterator test ===
     std::cout << "\n=== Iterator test ===\n";
-    em.registerSystem(system);
-    ECSView<dummyComponentA> view(&em, system);
-    for (auto it = view.begin(); it.archetypeIndex < view.end().archetypeIndex; it++) {
-        auto [a] = *it;
-        std::cout << "Iterated A = " << a.x << "\n";
+    //em.registerSystem(system);
+    ECSView<dummyComponentA> view(&em);
+    for(auto& [it] : view) {
+        std::cout << "Iterated A = " << it.x << "\n";
     }
+    // for (auto it = view.begin(); it.archetypeIndex < view.end().archetypeIndex; it++) {
+    //     auto [a] = *it;
+    //     std::cout << "Iterated A = " << a.x << "\n";
+    // }
 
     std::cout << "\n All ECS tests passed!\n";
     return 0;

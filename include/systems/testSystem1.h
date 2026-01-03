@@ -1,5 +1,6 @@
 #pragma once
 #include "systemBase.h"
+#include "ECSView.h"
 #include "Components.h"
 
 class EntityMover : public ISystem {

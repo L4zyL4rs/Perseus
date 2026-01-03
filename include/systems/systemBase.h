@@ -1,7 +1,8 @@
 #pragma once
-#include <bitset>
+//#include <bitset>
 #include <vector>
-#include "ECSView.h"
+#include "EntityBuilder.h"
+//#include "ECSView.h"
 
 extern const size_t MAX_COMPONENTS;
 
