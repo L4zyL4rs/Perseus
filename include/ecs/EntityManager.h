@@ -116,7 +116,10 @@ namespace ecs {
 		}
 
 		void copyComponent(ComponentType component, std::bitset<MAX_COMPONENTS> dst, uint32_t dstIndex, void* srcData) {
-			archetypes[dst].storages[component].insert(srcData, dstIndex);
+			std::cout << "Inserting data at " << dstIndex << " af vector with size " << archetypes[dst].storages.size() << "\n";
+			std::cout << "Component is " << component << "\n";
+			uint32_t storageIndex = archetypes[dst].findComponentIndex(component);
+			archetypes[dst].storages[storageIndex].insert(srcData, dstIndex);
 		}
 
 		void removeComponent(Entity entity, ComponentType type) {

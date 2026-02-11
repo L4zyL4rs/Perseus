@@ -3,7 +3,7 @@
 #include<vector>
 #include "ComponentStorage.h"
 #include "IndexQueue.h"
-#include "config.h"
+#include "ECSConfig.h"
 
 extern const size_t MAX_COMPONENTS;
 

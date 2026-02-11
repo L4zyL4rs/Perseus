@@ -64,6 +64,7 @@ namespace ecs {
 		struct Holder : IHolder {
 			T comp;
 			explicit Holder(const T& c) : comp(c) {};
+			// getComponentID() is wrong here maybe???????????
 			void apply(EntityManager& em, Entity e) override { em.addComponent(e, ecs::getComponentID<T>(), &comp); }
 		};
 
