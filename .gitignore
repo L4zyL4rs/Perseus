@@ -40,8 +40,9 @@
 *.dwo
 
 # Other folders
-.vs
-.cache
-.continue
-out
-build
+.vs/
+.cache/
+.continue/
+out/
+build/
+external/
