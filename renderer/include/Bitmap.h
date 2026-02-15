@@ -1,5 +1,5 @@
 #pragma once
-#include "vulkanHelper.h"
+#include "VulkanHelper.h"
 
 struct Bitmap {
 	int width;

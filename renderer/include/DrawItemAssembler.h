@@ -1,6 +1,6 @@
 #pragma once
 #include "AssetManager.h"
-#include "pipelineManager.h"
+#include "PipelineManager.h"
 
 // No lookup anymore, everything needed to draw is in here
 // Only vertices are loaded globally

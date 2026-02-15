@@ -35,7 +35,7 @@ void DescriptorAllocator::reset() {
     destroyDescriptorSetLayouts();
 }
 
-VkDescriptorSet DescriptorAllocator::allocate(VkDescriptorSetLayout layout, VkDescriptorSet* pDescriptorSet, size_t count) {
+void DescriptorAllocator::allocate(VkDescriptorSetLayout layout, VkDescriptorSet* pDescriptorSet, size_t count) {
     std::vector<VkDescriptorSetLayout> layouts(*MAX_FRAMES_IN_FLIGHT, layout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;

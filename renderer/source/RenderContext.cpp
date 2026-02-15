@@ -1,4 +1,5 @@
 #include "RenderContext.h"
+#include <cstring>
 
 RenderContext::RenderContext(AppWindow* w) : window(w)
 {

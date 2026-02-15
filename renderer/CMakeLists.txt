@@ -30,7 +30,11 @@ file(DOWNLOAD
 https://github.com/google/fonts/raw/892dc85555606db5a08545c7874a4dc561d3ce50/apache/robotoslab/RobotoSlab%5Bwght%5D.ttf
 ${FONT_DIR}/robotoslab.ttf)
 
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 include(FetchContent)
+
 
 FetchContent_Declare(
     glfw
@@ -56,10 +60,10 @@ add_library(VulkanRenderer
     source/main.cpp
     source/DescriptorAllocator.cpp
     source/FontRenderer.cpp
-    source/pipelineManager.cpp
+    source/PipelineManager.cpp
     source/Quickmath.cpp
     source/renderObject.cpp
-    source/vulkanHelper.cpp
+    source/VulkanHelper.cpp
     source/vma.cpp  
     source/Config.cpp 
     source/FrameManager.cpp
