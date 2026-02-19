@@ -31,9 +31,14 @@ int main() {
 
 	scheduler.addCommands(cmd);
 
+    ecs::ECSView<EngineControl> controlView(&em);
 
 	for (int i = 0; i < 100; i) {
 		scheduler.run();
+        controlView.update();
+        auto itControl = controlView.begin();
+        auto& [ctrl] = *itControl;
+        if(ctrl.requestExit) { break; }
 	}
 }
 
@@ -52,5 +57,6 @@ std::vector<ecs::EntityBuilder> startScene(ecs::EntityManager& em, RenderSystem&
     cam.lastX = WINDOWWIDTH / 2;
     cam.lastY = WINDOWHEIGHT / 2;
     scene.emplace_back(ecs::EntityBuilder(em).with<Camera>(cam));
+    scene.emplace_back(ecs::EntityBuilder(em).with<EngineControl>(EngineControl()));
     return scene;
 }

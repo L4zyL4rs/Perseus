@@ -5,6 +5,7 @@
 #include "systemBase.h"
 #include "UserInput.h"
 #include "Camera.h"
+#include "EngineControl.h"
 #include <iterator>
 #include <vector>
 
@@ -16,6 +17,7 @@ public:
 		textElements(&em),
         input(&em),
         camera(&em),
+        control(&em),
 		window(WINDOWWIDTH, WINDOWHEIGHT),
 		context(&window),
 		swapchain(&context),
@@ -39,6 +41,7 @@ public:
 		textElements.update();
         input.update();
         camera.update();
+        control.update();
 	}
 
 private:
@@ -47,6 +50,7 @@ private:
 	ecs::ECSView<TextElement> textElements;
     ecs::ECSView<UserInput> input;
     ecs::ECSView<Camera> camera;
+    ecs::ECSView<EngineControl> control;
 	AppWindow window;
 	RenderContext context;
 	Swapchain swapchain;
@@ -152,12 +156,16 @@ private:
         auto itCam = camera.begin();
         auto& [cam] = *itCam;
         
+        auto itControl = control.begin();
+        auto& [ctrl] = *itControl;
+
         bool wPressed = in.keys[static_cast<size_t>(Key::w)];
         bool aPressed = in.keys[static_cast<size_t>(Key::a)];
         bool sPressed = in.keys[static_cast<size_t>(Key::s)];
         bool dPressed = in.keys[static_cast<size_t>(Key::d)];
         bool lShiftPressed = in.keys[static_cast<size_t>(Key::lShift)];
         bool lCtrlPressed = in.keys[static_cast<size_t>(Key::lCtrl)];
+        bool escPressed = in.keys[static_cast<size_t>(Key::esc)];
 
 	    const float cameraSpeed = 0.0005f * deltaTime;
         std::cout << "Cam speed " << cameraSpeed << "\n";
@@ -180,6 +188,32 @@ private:
         if(lCtrlPressed) {
             cam.worldCameraPos -= cameraSpeed * cam.cameraUp;
         }
+
+        if(escPressed) {
+            ctrl.requestExit = true;
+        }
+
+        double xOffset = in.mouseX - cam.lastX;
+        double yOffset = in.mouseY - cam.lastY;
+        cam.lastX = in.mouseX;
+        cam.lastY = in.mouseY;
+        
+        xOffset *= MOUSESENSE;
+        yOffset *= MOUSESENSE;
+
+        cam.yaw += xOffset;
+        cam.pitch += yOffset;
+
+        if (cam.pitch > 89.0f)  {cam.pitch = 89.0f;}
+    	if (cam.pitch < -89.0f) {cam.pitch = -89.0f;}
+
+    	glm::vec3 direction;
+	    direction.x = cos(glm::radians(-cam.yaw)) * cos(glm::radians(cam.pitch));
+	    direction.y = sin(glm::radians(-cam.yaw)) * cos(glm::radians(cam.pitch));
+	    direction.z = sin(glm::radians(cam.pitch));
+
+	    cam.cameraFront = glm::normalize(direction);
+
     }
      
 };

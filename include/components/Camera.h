@@ -3,8 +3,8 @@
 
 struct Camera {
     // lastX and lastY should be set to center of screen at start
-    float lastX{};
-    float lastY{};
+    double lastX{};
+    double lastY{};
     float yaw = 0.0f;
     float pitch = 0.0f;
     glm::vec3 cameraFront = glm::vec3(1.0f, 0.0f, 0.0f);
