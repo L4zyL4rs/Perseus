@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <ft2build.h>
+#include "glm_config.h"
 #include FT_FREETYPE_H
 
 // Lookup table for using VkFormat and channels of bitmaps interchangeably

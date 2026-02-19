@@ -1,8 +1,11 @@
 #include "AppWindow.h"
+#include "GLFW/glfw3.h"
+#include <iostream>
 
-AppWindow::AppWindow()
-{
-	std::cout << "Cam size: " << sizeof(Camera) << "\n";
+AppWindow::AppWindow(uint32_t WIDTH, uint32_t HEIGHT) :
+    WINDOWWIDTH(WIDTH),
+    WINDOWHEIGHT(HEIGHT) {
+	//std::cout << "Cam size: " << sizeof(Camera) << "\n";
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -13,7 +16,7 @@ AppWindow::AppWindow()
 	std::cout << "User pointer set to: " << glfwGetWindowUserPointer(window) << "\n";
 	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(window, mouseCallback);
+	//glfwSetCursorPosCallback(window, mouseCallback);
 }
 
 void AppWindow::tick()
@@ -22,7 +25,7 @@ void AppWindow::tick()
 	deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
 
-	processInput();
+	//processInput();
 
 	glfwPollEvents();
 }
@@ -59,7 +62,7 @@ bool AppWindow::windowShouldClose()
 	return glfwWindowShouldClose(window);
 }
 
-void AppWindow::processInput()
+/*void AppWindow::processInput()
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -97,7 +100,7 @@ void AppWindow::processInput()
 		cam.worldCameraPos.y -= cameraSpeed * cam.cameraUp[1];
 		cam.worldCameraPos.z -= cameraSpeed * cam.cameraUp[2];
 	}
-}
+}*/
 
 void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
@@ -105,7 +108,7 @@ void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	app->framebufferResized = true;
 }
 
-void mouseCallback(GLFWwindow* window, double xpos, double ypos)
+/*void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
 	auto app = reinterpret_cast<AppWindow*>(glfwGetWindowUserPointer(window));
 	auto& cam = app->cam;
@@ -136,4 +139,5 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 	cam.cameraFront = glm::normalize(direction);
 	std::cout << "Address in mouseCallback: " << &cam.cameraFront << "\n";
 	std::cout << "Size of window: " << sizeof(Camera) << "\n";
-}
+}*/
+

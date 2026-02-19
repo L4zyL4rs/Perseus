@@ -1,7 +1,7 @@
 #pragma once
 #include "systemBase.h"
 #include "ECSView.h"
-#include "Components.h"
+#include "Ball.h"
 
 class EntityPrinter : public ISystem {
 private:

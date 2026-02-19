@@ -37,6 +37,7 @@ void ObjectManager::createMeshGraphicsPipeline() {
 
 const std::vector<DrawItem>& ObjectManager::assembleDrawItems(uint32_t currentImage) {
     drawItems.clear();
+    /*
     //updateGlobalUniformBuffer(currentImage);
     //updateViewPositions();
     const VkBuffer& vertexBuffer = assetManager->getVertexBuffer();
@@ -65,6 +66,7 @@ const std::vector<DrawItem>& ObjectManager::assembleDrawItems(uint32_t currentIm
 
     }
     //std::cout << "Returning " << drawItems.size() << " items from object manager\n";
+    */
     return drawItems;
 }
 
@@ -85,21 +87,21 @@ void ObjectManager::createGlobalUniformBuffers() {
 
         vkMapMemory(context->device, globalUniformBuffersMemory[i], 0, bufferSize, 0, &globalUniformBuffersMapped[i]);
     }
-    updateGlobalUniformBuffer(0);
+    updateGlobalUniformBuffer(0, glm::vec3(0), glm::vec3(0), glm::vec3(0));
 }
 
-void ObjectManager::updateGlobalUniformBuffer(uint32_t currentImage) {
-    lightPos = Int64vector(1, 1, 1);
+void ObjectManager::updateGlobalUniformBuffer(uint32_t currentImage, glm::vec3 worldCameraPos, glm::vec3 cameraFront, glm::vec3 cameraUp) {
+    lightPos = glm::vec3(1, 1, 1);
     lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec4 viewLightPos = glm::vec4(0, 0, 0, 0);
-    viewLightPos.x = static_cast<float>(lightPos.x - window->cam.worldCameraPos.x);
-    viewLightPos.y = static_cast<float>(lightPos.y - window->cam.worldCameraPos.y);
-    viewLightPos.z = static_cast<float>(lightPos.z - window->cam.worldCameraPos.z);
+    viewLightPos.x = lightPos.x - worldCameraPos.x;
+    viewLightPos.y = lightPos.y - worldCameraPos.y;
+    viewLightPos.z = lightPos.z - worldCameraPos.z;
     /*std::cout << "CameraFrontX: " << window->cam.cameraFront.x << " ";
     std::cout << "CameraFrontY: " << window->cam.cameraFront.y << " ";
     std::cout << "CameraFrontZ: " << window->cam.cameraFront.z << "\n";*/
     GlobalUniformBufferObject ubo{};
-    ubo.view = glm::lookAt(viewCameraPos, window->cam.cameraFront + viewCameraPos, window->cam.cameraUp);
+    ubo.view = glm::lookAt(viewCameraPos, cameraFront + viewCameraPos, cameraUp);
     ubo.proj = glm::perspective(glm::radians(45.0f), swapchain->extent.width / (float)swapchain->extent.height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
     //std::cout << "projection: \n" << ubo.proj;
@@ -108,8 +110,8 @@ void ObjectManager::updateGlobalUniformBuffer(uint32_t currentImage) {
     memcpy(globalUniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
-void ObjectManager::updateUniformBuffer(uint32_t currentImage) {
-    updateGlobalUniformBuffer(currentImage);
+void ObjectManager::updateUniformBuffer(uint32_t currentImage, glm::vec3 worldCameraPos, glm::vec3 cameraFront, glm::vec3 cameraUp) {
+    updateGlobalUniformBuffer(currentImage, worldCameraPos, cameraFront, cameraUp);
 }
 
 //void ObjectManager::updateViewPositions() {

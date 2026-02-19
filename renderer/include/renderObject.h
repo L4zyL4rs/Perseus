@@ -44,7 +44,7 @@ public:
 
 	//void createObject();1
 	//void deleteObject();
-	void updateUniformBuffer(uint32_t currentImage);
+	void updateUniformBuffer(uint32_t currentImage, glm::vec3 worldCameraPos, glm::vec3 cameraFront, glm::vec3 cameraUp);
 
 	//void draw(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	//void drawUI(VkCommandBuffer commandBuffer, uint32_t imageIndex);
@@ -73,7 +73,7 @@ private:
 
 	glm::vec3 viewCameraPos{};
 
-	Int64vector lightPos{};
+    glm::vec3 lightPos{};
 	glm::vec3 lightColor{1.0f};
 
 	//std::vector<RenderObject> objects;
@@ -92,7 +92,7 @@ private:
 	float physicsDelta = 1;		// Delta t for physics simulation in miliseconds
 
 	void createGlobalUniformBuffers();
-	void updateGlobalUniformBuffer(uint32_t currentImage);
+	void updateGlobalUniformBuffer(uint32_t currentImage, glm::vec3 worldCameraPos, glm::vec3 cameraFront, glm::vec3 cameraUp);
 	void createGlobalDescriptorSets();
 	void createMeshGraphicsPipeline();
 	std::vector<float> generateHitboxIntervals();

@@ -3,6 +3,7 @@ project(Perseus)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(renderer)
 
@@ -10,9 +11,12 @@ add_subdirectory(renderer)
 add_library(ecs INTERFACE)
 target_include_directories(ecs INTERFACE include/ecs)
 
+add_library(components INTERFACE)
+target_include_directories(components INTERFACE include/components)
+
 add_library(systems INTERFACE)
 target_include_directories(systems INTERFACE include/systems)
-target_link_libraries(systems INTERFACE ecs VulkanRenderer)
+target_link_libraries(systems INTERFACE ecs VulkanRenderer components)
 
 add_library(scheduler INTERFACE)
 target_include_directories(scheduler INTERFACE include/scheduler)

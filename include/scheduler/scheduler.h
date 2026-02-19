@@ -12,7 +12,7 @@ public:
 	ecs::EntityManager& em;
 	std::vector<ISystem*> systems;
 	std::vector<std::vector<ecs::EntityBuilder>*> commandQueue;
-	int dt = 100;
+	int dt = 10;    //Typical time for one frame, make smarter later
 
 	void run() {
 		flush();

@@ -39,6 +39,9 @@
 # debug information files
 *.dwo
 
+# LSP Files
+.clangd
+
 # Other folders
 .vs/
 .cache/
@@ -46,3 +49,4 @@
 out/
 build/
 external/
+_deps/
