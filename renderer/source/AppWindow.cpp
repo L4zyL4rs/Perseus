@@ -11,6 +11,12 @@ AppWindow::AppWindow(uint32_t WIDTH, uint32_t HEIGHT) :
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	window = glfwCreateWindow(WINDOWWIDTH, WINDOWHEIGHT, "Vulkan", nullptr, nullptr);
+    // Window manager might have other idea what size the window should be
+    int realH, realW;
+    glfwGetWindowSize(window, &realW, &realH);
+    WINDOWWIDTH = realW;
+    WINDOWHEIGHT = realH;
+    std::cout << "Window is actually " << WINDOWWIDTH << "x" << WINDOWHEIGHT << " big\n";
 	std::cout << "Window pointer: " << this << "\n";
 	glfwSetWindowUserPointer(window, this);
 	std::cout << "User pointer set to: " << glfwGetWindowUserPointer(window) << "\n";

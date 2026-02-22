@@ -202,6 +202,7 @@ void FrameManager::drawDrawItems(const std::vector<DrawItem>& items, VkCommandBu
 		}
 
 		if (item.indexBuffer == nullptr) {
+            std::cout << "Drawing non-indexed\n" << item;
 			vkCmdDraw(commandBuffer, item.meshStopIndex - item.meshStartIndex + 1, 1, item.meshStartIndex, 0);
 		}
 		else {

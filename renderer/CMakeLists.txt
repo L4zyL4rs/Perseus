@@ -23,8 +23,8 @@ file(COPY
     DESTINATION ${CMAKE_BINARY_DIR}
 )
 
-set(FONT_DIR ${CMAKE_BINARY_DIR}/assets/fonts)
 file(MAKE_DIRECTORY ${FONT_DIR})
+set(FONT_DIR ${CMAKE_BINARY_DIR}/assets/fonts)
 
 file(DOWNLOAD 
 https://github.com/google/fonts/raw/892dc85555606db5a08545c7874a4dc561d3ce50/apache/robotoslab/RobotoSlab%5Bwght%5D.ttf

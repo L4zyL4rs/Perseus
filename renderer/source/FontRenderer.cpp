@@ -1,4 +1,3 @@
-#pragma once
 #include "FontRenderer.h"
 #include <unordered_map>
 
@@ -11,7 +10,7 @@ FontRenderer::FontRenderer(RenderContext* c, DescriptorAllocator* dA, PipelineMa
     createTextGraphicsPipeline();
     initStagingBuffer(characterBufferSize);
     createCharacterBuffer();
-    createTextElement(fontPathTerminal, 200, "Elden Ring Goonersquad", glm::vec2(-0.5, 0.0));
+    //createTextElement(fontPathTerminal, 200, "Elden Ring Goonersquad", glm::vec2(-0.5, 0.0));
 }
 
 void FontRenderer::createTextGraphicsPipeline() {
@@ -37,35 +36,38 @@ void FontRenderer::createCharacterBuffer() {
 }
 
 // For now fully recreate drawItems
-const std::vector<DrawItem>& FontRenderer::assembleDrawItems(std::unordered_map<FontHandle, std::vector<CharacterCoordinates>>& texts, std::vector<CharacterCoordinates>& textBuffer) {
-    drawItems.clear();
-
+const std::vector<DrawItem> FontRenderer::assembleDrawItems(std::unordered_map<FontHandle, std::vector<CharacterCoordinates>>& texts) {
+    std::vector<DrawItem> drawItems2;
+    std::vector<CharacterCoordinates> textBuffer;
     //Assign each font its own drawItem
-    for (auto& font : fontHandles) {
-        if (texts[font].size() == 0) {
+    for (auto& [font, coords] : texts) {
+        if (coords.size() == 0) {
             continue;
         }
         const FontResource& resource = assetManager->getFont(font);
         DrawItem drawItem;
         drawItem.descriptorSets = resource.atlasDescriptorSet;
         drawItem.meshStartIndex = textBuffer.size();
-        textBuffer.append_range(texts[font]);
+        textBuffer.append_range(coords);
         drawItem.meshStopIndex = textBuffer.size() - 1;
         drawItem.meshBuffer = characterBuffer;
         drawItem.indexBuffer = nullptr;
         drawItem.pipeline = PipelineType::Text;
         drawItem.sortKey = 0;
-        
-        drawItems.push_back(drawItem);
+       
+        std::cout << drawItem;
+        drawItems2.push_back(drawItem);
         std::cout << "Text Buffer has size " << textBuffer.size() << "\n";
     }
 
     // Beware that characterBufferSize might not be big enough!
+    const size_t bytes = textBuffer.size() * sizeof(CharacterCoordinates);
+    assert(bytes <= characterBufferSize);
     memcpy(pStagingBuffer, textBuffer.data(), textBuffer.size() * sizeof(CharacterCoordinates));
     VulkanHelper::copyBuffer(context, commandPool->get(), stagingBuffer, characterBuffer, characterBufferSize);
 
-    std::cout << "Returning " << drawItems.size() << " items from font manager\n";
-    return drawItems;
+    std::cout << "Returning " << drawItems2.size() << " items from font manager\n";
+    return drawItems2;
 }
 
 
@@ -83,7 +85,7 @@ void FontRenderer::destroyCharacterBuffer() {
 //       | /     |
 //       v2-----v3
 //
-void FontRenderer::createCharacterCoordinates(std::string text, TextElement* pTextElement) {
+/*void FontRenderer::createCharacterCoordinates(std::string text, TextElement* pTextElement) {
     std::vector<CharacterCoordinates> coordinates;
     const FontResource& font = assetManager->getFont(pTextElement->handle);
     coordinates.reserve(text.length() * 6);
@@ -139,7 +141,7 @@ void FontRenderer::createCharacterCoordinates(std::string text, TextElement* pTe
     }
 
     pTextElement->text.append_range(coordinates);
-}
+}*/
 
 void FontRenderer::initStagingBuffer(int size) {
     VulkanHelper::createBuffer(context, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
@@ -153,7 +155,7 @@ void FontRenderer::destroyStagingBuffer() {
 }
 
 // This function should probably return some handle to the textElement, so it can actually be accessed again
-TextElement FontRenderer::createTextElement(std::string fontPath, int fontSize, std::string text, glm::vec2 pos) {
+/*TextElement FontRenderer::createTextElement(std::string fontPath, int fontSize, std::string text, glm::vec2 pos) {
     // I think I found out how cool pointers are when I wrote this
     // Why
     TextElement textElement;
@@ -167,7 +169,7 @@ TextElement FontRenderer::createTextElement(std::string fontPath, int fontSize, 
     fontHandles.push_back(handle);
     return textElement;
     //assembleDrawItems();
-}
+}*/
 
 //void FontRenderer::draw(VkCommandBuffer commandBuffer, uint32_t currentFrame) {
 //    // IDEA:
@@ -199,3 +201,4 @@ TextElement FontRenderer::createTextElement(std::string fontPath, int fontSize, 
 //        vkCmdDraw(commandBuffer, resource.lastIndex - font->firstIndex + 1, 1, font->firstIndex, 0);
 //    }
 //}
+

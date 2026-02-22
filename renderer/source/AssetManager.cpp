@@ -90,10 +90,13 @@ AssetManager::AssetManager(RenderContext* c, CommandPool* cP, DescriptorAllocato
 	loadAsset(cube);
 	std::string sphere = "sphere";
 	loadAsset(sphere);
+    std::string robotoslab = "robotoslab";
+    loadFont(robotoslab, 30);
 }
 
-FontHandle AssetManager::loadFont(std::string& path, size_t fontSize)
+FontHandle AssetManager::loadFont(std::string& name, size_t fontSize)
 {
+    std::string path = "assets/fonts/" + name + ".ttf";
 	if (!fontResources.empty()) {
 		for (size_t i = 0; i < fontResources.size(); i++) {
 			if (fontResources[i].path == path && fontResources[i].fontSize == fontSize) {
@@ -101,6 +104,7 @@ FontHandle AssetManager::loadFont(std::string& path, size_t fontSize)
 			}
 		}
 	}
+    assert(!buffersCreated);
 
 	FontHandle handle = fontResources.size();
 	FontResource resource;

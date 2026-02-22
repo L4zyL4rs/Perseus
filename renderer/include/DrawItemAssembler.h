@@ -16,6 +16,12 @@ struct DrawItem {
 	uint64_t sortKey;	// Worry about draw sorting later
 };
 
+inline std::ostream& operator<<(std::ostream& out, const DrawItem& in) {
+    return out  << "MeshStartIndex = " << in.meshStartIndex << "\n"
+                << "MeshStopIndex = " << in.meshStopIndex << "\n"
+                << "SortKey = " << in.sortKey << "\n";
+}
+
 // Do not put this here maybe xd
 struct MeshPushConstant {
 	glm::mat4 transform;
