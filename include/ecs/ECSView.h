@@ -31,7 +31,6 @@ namespace ecs {
 
 			// MIGHT BECOME DANGLING
 			archetypes = &(em->systemRegistry[systemSignature]);
-
 			update();
 		}
 

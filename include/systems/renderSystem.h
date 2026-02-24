@@ -8,6 +8,7 @@
 #include "EngineControl.h"
 #include "TextElement.h"
 #include <iterator>
+#include <string>
 #include <vector>
 
 class RenderSystem : public ISystem{
@@ -27,6 +28,7 @@ public:
 	}
 
 	std::vector<ecs::EntityBuilder>* run(uint32_t dt) override {
+        updateDiagnostics();
         queryInput();
         updateCamera(dt);
 		std::vector<ecs::EntityBuilder>* commands = new std::vector<ecs::EntityBuilder>;
@@ -36,8 +38,16 @@ public:
 		
 		return commands;
 	}
+    
+    // Set up diagnostic texts
+    std::vector<ecs::EntityBuilder> init() {
+        std::vector<ecs::EntityBuilder> cmd;
+        std::string robotoslab = "robotoslab";
+        cmd.emplace_back(ecs::EntityBuilder(entityManager, &diagnostics).with<TextElement128>(TextElement128("text", frameManager.assetManager.loadFont(robotoslab, 30), glm::vec2(0,0), glm::vec4(1))));
+        return cmd;
+    }
 
-	void updateView() {
+	void updateView() override {
 		renderObjects.update();
 		textElements.update();
         input.update();
@@ -60,12 +70,15 @@ public:
 private:
     std::vector<DrawItem> drawItems;
 	int wrimels;
+    ecs::Entity diagnostics;
 
 	void assembleDrawItems() {
 		drawItems.clear();
-		for (auto& [obj] : renderObjects) {
-			assembleObjDrawItem(obj);
-		}
+        assembleObjDrawItem(entityManager.getComponent<RenderObject>(0));
+        assembleObjDrawItem(entityManager.getComponent<RenderObject>(1));
+		//for (auto& [obj] : renderObjects) {
+		//	assembleObjDrawItem(obj);
+		//}
 
 		assembleTextDrawItems();
 	}
@@ -91,8 +104,6 @@ private:
 		glm::mat4 proj = glm::perspective(glm::radians(45.0f), swapchain.extent.width / (float)swapchain.extent.height, 0.1f, 10.0f);
 		proj[1][1] *= -1;
 		transform = proj * transform;
-
-		std::cout << "xddddmeshstart " << mesh.start << "\n";
 
 		DrawItem item;
 		item.descriptorSets = descriptors;
@@ -122,7 +133,7 @@ private:
             std::cout << "Text is now " << element.text << "\n";
 		}
 
-		drawItems.append_range(frameManager.fontRenderer.assembleDrawItems(texts));
+		drawItems.append_range(frameManager.fontRenderer.assembleDrawItems(texts, frameManager.currentFrame));
         for(const auto [element] : textElements) {
             std::cout << "Text is " << element.text << "\n";
         }
@@ -290,5 +301,9 @@ private:
 	    cam.cameraFront = glm::normalize(direction);
 
     }
-     
+
+    void updateDiagnostics() {
+        std::string text = "Frame " + std::to_string(frameManager.currentFrame); 
+        entityManager.getComponent<TextElement128>(diagnostics).change(text);
+    }
 };

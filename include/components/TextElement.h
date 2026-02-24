@@ -16,4 +16,8 @@ struct TextElement128 {
     {
         std::strncpy(text, t.c_str(), 128);
     }
+
+    void change(std::string t) {
+        std::strncpy(text, t.c_str(), 128);
+    }
 };

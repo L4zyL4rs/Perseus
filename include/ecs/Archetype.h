@@ -1,5 +1,6 @@
 #pragma once
 #include<bitset>
+#include <stdexcept>
 #include<vector>
 #include "ComponentStorage.h"
 #include "IndexQueue.h"
@@ -17,6 +18,7 @@ namespace ecs {
 		IndexQueue storageQueue;
 
 		uint32_t findComponentIndex(ComponentType t) {
+            if(!components[t]) {throw std::runtime_error("Component not in Archetype!");}
 			uint32_t idx = 0;
 			for (int i = 0; i < t; i++) {
 				if (components[idx]) { idx++; }
@@ -25,3 +27,4 @@ namespace ecs {
 		}
 	};
 }
+

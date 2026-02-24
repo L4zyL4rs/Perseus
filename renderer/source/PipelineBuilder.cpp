@@ -177,10 +177,11 @@ void PipelineBuilder::addDescriptor(VkDescriptorSetLayout layout)
 
 void PipelineBuilder::build()
 {
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+	//VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
 	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data(); // ADD UI DESCRIPTOR SET LAYOUT
+    std::cout << "Created pipeline with setLayoutCount = " << descriptorSetLayouts.size() << "\n";
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
 	pipelineLayoutInfo.pushConstantRangeCount = pushConstantRangeCount;
 

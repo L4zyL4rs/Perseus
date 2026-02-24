@@ -38,7 +38,7 @@ public:
 	FontRenderer(RenderContext* c, DescriptorAllocator* dA, PipelineManager* pM, AssetManager* aM, CommandPool* cP);
 	//TextElement createTextElement(std::string fontPath, int fontSize, std::string text, glm::vec2 pos);
 	void cleanup();
-	const std::vector<DrawItem> assembleDrawItems(std::unordered_map<FontHandle, std::vector<CharacterCoordinates>>& texts);
+	const std::vector<DrawItem> assembleDrawItems(std::unordered_map<FontHandle, std::vector<CharacterCoordinates>>& texts, uint32_t currentFrame);
 	void draw(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 private:
 	RenderContext* context;

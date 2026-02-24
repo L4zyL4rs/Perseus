@@ -4,6 +4,10 @@
 #include "testSystem1.h"
 #include "testSystem2.h"
 #include "renderSystem.h"
+#include <chrono>
+#include <thread>
+#include <chrono>
+#include <thread>
 
 std::vector<ecs::EntityBuilder> startScene(ecs::EntityManager& em, RenderSystem& rend);
 
@@ -12,7 +16,7 @@ int main() {
 	Scheduler scheduler = Scheduler(em);
 	//EntityMover mover = EntityMover(em);
 	//EntityPrinter printer = EntityPrinter(em);
-	RenderSystem renderer = RenderSystem(em, 60, 1200);
+	RenderSystem renderer = RenderSystem(em, 1600, 1200);
 
 	//scheduler.addSystem(&mover);
 	//scheduler.addSystem(&printer);
@@ -24,6 +28,7 @@ int main() {
 
 	std::vector<ecs::EntityBuilder>* cmd = new std::vector<ecs::EntityBuilder>;
 	cmd->append_range(startScene(em, renderer));
+    cmd->append_range(renderer.init());
     /*cmd->push_back(ecs::EntityBuilder(em).with<Ball>(Ball(10, 12)));
 	cmd->push_back(ecs::EntityBuilder(em).with<Ball>(Ball(200, -100)));
 	cmd->push_back(ecs::EntityBuilder(em).with<Ball>(Ball(300, -100)));
@@ -39,8 +44,8 @@ int main() {
         auto itControl = controlView.begin();
         auto& [ctrl] = *itControl;
         if(ctrl.requestExit) { break; }
-        //sleep(5);
-	}
+	    //std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
 }
 
 std::vector<ecs::EntityBuilder> startScene(ecs::EntityManager& em, RenderSystem& rend) {

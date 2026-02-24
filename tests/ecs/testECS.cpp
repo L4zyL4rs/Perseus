@@ -65,7 +65,8 @@ int main() {
     dummyComponentA compA{ 42 };
     dummyComponentB compB{ 7, 8 };
 
-    Entity e1 = EntityBuilder(em)
+    Entity e1;
+    EntityBuilder(em, &e1)
         .with(compA)
         .with(compB)
         .build();
@@ -77,7 +78,8 @@ int main() {
 
     // === Create another entity ===
     dummyComponentA compA2{ 99 };
-    Entity e2 = EntityBuilder(em)
+    Entity e2;
+    EntityBuilder(em, &e2)
         .with(compA2)
         .build();
 

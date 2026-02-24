@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <typeinfo>
 #include <vector>
 #include <bitset>
 #include "Archetype.h"
@@ -36,4 +37,11 @@ namespace ecs {
 			} ();
 		return componentID;
 	}
+
+    // Just an alias for the above
+    // TODO: Rename getComponentID to this
+    template<typename T >
+    ComponentType getComponentType() {
+        return getComponentID<T>();
+    }
 };

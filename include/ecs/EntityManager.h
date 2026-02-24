@@ -1,4 +1,5 @@
 #pragma once
+#include <stdexcept>
 #include <unordered_map>
 #include <bitset>
 #include <assert.h>
@@ -205,6 +206,16 @@ namespace ecs {
 		bool systemIsRegistered(std::bitset<MAX_COMPONENTS> components) {
 			return systemRegistry.contains(components);
 		}
+
+        template <typename T>
+        T& getComponent(Entity e) {
+           ComponentType comp = getComponentType<T>();
+           EntityMeta meta = entityMetaVector[e];
+           if(!hasComponent(e, comp)) {throw std::runtime_error("No entity with such component!");}
+           uint32_t compIndex = meta.pArchetype->findComponentIndex(comp);
+           return *static_cast<T*>(meta.pArchetype->storages[compIndex].getEntryP(meta.indexInArchetype));
+           
+        }
 	};
 
 }

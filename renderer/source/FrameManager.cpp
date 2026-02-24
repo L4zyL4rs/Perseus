@@ -5,7 +5,7 @@ FrameManager::FrameManager(Swapchain* s) : swapchain(s)
 , window(context->window)
 , pipelineManager(context, swapchain)
 , commandPool(context)
-, MAX_FRAMES_IN_FLIGHT(1)
+, MAX_FRAMES_IN_FLIGHT(3)
 , descriptorAllocator(context, MAX_OBJECTS, &MAX_FRAMES_IN_FLIGHT)
 , assetManager(context, &commandPool, &descriptorAllocator)
 , objectManager(&descriptorAllocator, &pipelineManager, &commandPool, &assetManager, &MAX_FRAMES_IN_FLIGHT)
@@ -193,9 +193,10 @@ void FrameManager::drawDrawItems(const std::vector<DrawItem>& items, VkCommandBu
 		// Driver should probably make this a no-op but idk
 		VkDeviceSize offsets[] = { 0 };
 		//std::cout << item.meshBuffer
+        std::cout << "Item with " << item.descriptorSets.size() << " descriptor sets\n";
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager.pipeline(item.pipeline));
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &item.meshBuffer, offsets);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager.getPipelineLayout(item.pipeline), 0, item.descriptorSets.size(), &item.descriptorSets[0], 0, 0);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager.getPipelineLayout(item.pipeline), 0, item.descriptorSets.size(), item.descriptorSets.data(), 0, 0);
 		MeshPushConstant pushConstant{ item.transform };
 		if (pipelineManager.pushConstantSizes[item.pipeline] != 0) {
 			vkCmdPushConstants(commandBuffer, pipelineManager.getPipelineLayout(item.pipeline), VK_SHADER_STAGE_VERTEX_BIT, 0, pipelineManager.pushConstantSizes[item.pipeline], &pushConstant);

@@ -125,12 +125,13 @@ void ObjectManager::updateUniformBuffer(uint32_t currentImage, glm::vec3 worldCa
 //}
 
 void ObjectManager::createGlobalDescriptorSets() {
+    std::cout << "creating " << *MAX_FRAMES_IN_FLIGHT << " descriptor sets\n";
     globalDescriptorSets.resize(*MAX_FRAMES_IN_FLIGHT);
     descriptorAllocator->allocate(descriptorAllocator->layouts.camera, globalDescriptorSets.data(), *MAX_FRAMES_IN_FLIGHT);
 
     for (size_t i = 0; i < *MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo uniformBufferInfo{};
-        uniformBufferInfo.buffer = globalUniformBuffers[0];
+        uniformBufferInfo.buffer = globalUniformBuffers[i];
         uniformBufferInfo.offset = 0;
         uniformBufferInfo.range = sizeof(GlobalUniformBufferObject);
 

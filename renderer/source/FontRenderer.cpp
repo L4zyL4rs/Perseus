@@ -36,7 +36,7 @@ void FontRenderer::createCharacterBuffer() {
 }
 
 // For now fully recreate drawItems
-const std::vector<DrawItem> FontRenderer::assembleDrawItems(std::unordered_map<FontHandle, std::vector<CharacterCoordinates>>& texts) {
+const std::vector<DrawItem> FontRenderer::assembleDrawItems(std::unordered_map<FontHandle, std::vector<CharacterCoordinates>>& texts, uint32_t currentFrame) {
     std::vector<DrawItem> drawItems2;
     std::vector<CharacterCoordinates> textBuffer;
     //Assign each font its own drawItem
@@ -46,7 +46,7 @@ const std::vector<DrawItem> FontRenderer::assembleDrawItems(std::unordered_map<F
         }
         const FontResource& resource = assetManager->getFont(font);
         DrawItem drawItem;
-        drawItem.descriptorSets = resource.atlasDescriptorSet;
+        drawItem.descriptorSets = {resource.atlasDescriptorSet[currentFrame]};
         drawItem.meshStartIndex = textBuffer.size();
         textBuffer.append_range(coords);
         drawItem.meshStopIndex = textBuffer.size() - 1;

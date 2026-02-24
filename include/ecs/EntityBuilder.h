@@ -4,13 +4,13 @@
 
 
 // API shuld be usable in the pattern 
-// auto e = ecs::EntityBuilder(em).with<Transform>(trans).with<Velocity>(vel).build();
+// ecs::EntityBuilder(em).with<Transform>(trans).with<Velocity>(vel).build();
 
 namespace ecs {
 
 	class EntityBuilder {
 	public:
-		explicit EntityBuilder(EntityManager& em) : em_(em) { std::cout << "Built command for entity " << e_ << "\n"; }
+		explicit EntityBuilder(EntityManager& em, Entity* eW = nullptr) : em_(em), eWrite(eW) { std::cout << "Built command for entity " << e_ << "\n"; }
 
 		EntityBuilder& forEntity(Entity e) {
 			e_ = e;
@@ -31,7 +31,7 @@ namespace ecs {
 			return *this;
 		}
 
-		Entity build() {
+		void build() {
 			std::cout << "Building entity " << e_ << "\n";
 			if (e_ == UINT32_MAX) {
 				e_ = em_.createEntity();
@@ -51,7 +51,7 @@ namespace ecs {
 
 			std::cout << "Successfully built entity " << e_;
 			
-			return e_;
+			if(eWrite) {*eWrite = e_;}
 		}
 
 	private:
@@ -69,6 +69,7 @@ namespace ecs {
 		};
 
 		EntityManager& em_;
+        Entity* eWrite;
 		Entity e_ = UINT32_MAX;
 		std::vector<IHolder*> adds_;
 		std::vector<ComponentType> removes_;

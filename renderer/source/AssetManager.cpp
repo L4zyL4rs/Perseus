@@ -383,9 +383,10 @@ void AssetManager::createTextureDescriptorSets(TextureHandle handle)
 	Texture& texture = textureResources[handle];
 
 	texture.descriptors.resize(*(descriptorAllocator->MAX_FRAMES_IN_FLIGHT));
+    std::cout << "Creating " << *(descriptorAllocator->MAX_FRAMES_IN_FLIGHT) << " texture descriptor sets\n";
+		descriptorAllocator->allocate(descriptorAllocator->layouts.meshAndSampler, texture.descriptors.data(), *(descriptorAllocator->MAX_FRAMES_IN_FLIGHT));
 
 	for (size_t i = 0; i < *(descriptorAllocator->MAX_FRAMES_IN_FLIGHT); i++) {
-		descriptorAllocator->allocate(descriptorAllocator->layouts.meshAndSampler, texture.descriptors.data(), *(descriptorAllocator->MAX_FRAMES_IN_FLIGHT));
 
 		VkDescriptorBufferInfo uniformBufferInfo{};
 		uniformBufferInfo.buffer = texture.materialDataBuffers[i];
