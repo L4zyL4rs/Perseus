@@ -27,6 +27,8 @@ class PipelineBuilder {
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 	VkVertexInputBindingDescription vertexBinding{};
 
+    std::string debugLabel{};
+
 public:
 	void setDefaults(PipelineManager* m, PipelineType t);
 	// Blend mode for correctly rendering (partially) transparent objects
@@ -40,5 +42,6 @@ public:
 	void addFragShader(const std::string& file);
 	void setVertexFormat(VkVertexInputBindingDescription binding, std::vector<VkVertexInputAttributeDescription> attributes);
 	void addDescriptor(VkDescriptorSetLayout layout);
+    void setPipelineDebugLabel(std::string label);
 	void build();
 };

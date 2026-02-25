@@ -1,6 +1,8 @@
 #pragma once
 #include <optional>
 #include <set>
+#include <stdexcept>
+#include <string>
 #include <vector>
 #include "AppWindow.h"
 #include "vma.h"
@@ -24,6 +26,10 @@ struct QueueFamilyIndices {
 	bool isComplete() {
 		return graphicsFamily.has_value() && presentFamily.has_value();
 	}
+};
+
+struct DebugUtils {
+    PFN_vkSetDebugUtilsObjectNameEXT vkSetObjectName = nullptr;
 };
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
@@ -55,7 +61,21 @@ public:
 	VkQueue getPresentQueue() const;
 	VkInstance getInstance() const;
 
+    template <typename T>
+    inline void setDebugLabel(VkObjectType type, const T& object, const std::string& label) {
+        VkDebugUtilsObjectNameInfoEXT nameInfo {};
+        nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        nameInfo.objectType = type;
+        nameInfo.objectHandle = reinterpret_cast<uint64_t>(object);
+        nameInfo.pObjectName = label.c_str();
+        nameInfo.pNext = NULL;
+
+        if(debugUtils.vkSetObjectName(device, &nameInfo) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to set debug label!");
+        }
+    }
 private:
+    DebugUtils debugUtils{};
 	void pickPhysicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool checkDeviceExtensionsSupport(VkPhysicalDevice device);
@@ -69,4 +89,7 @@ private:
 	VkSampleCountFlagBits getMaxUsableSampleCount();
 	void createMemoryAllocator();
 	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+    void createDebugUtils();
+    
+
 };

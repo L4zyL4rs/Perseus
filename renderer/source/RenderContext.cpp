@@ -2,6 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
+#include <vulkan/vulkan_core.h>
 
 RenderContext::RenderContext(AppWindow* w) : window(w)
 {
@@ -190,6 +191,8 @@ void RenderContext::createInstance()
 	if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create instance!");
 	}
+
+    createDebugUtils();
 }
 
 bool RenderContext::checkValidationLayerSupport()
@@ -362,4 +365,10 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
 	else {
 		return VK_ERROR_EXTENSION_NOT_PRESENT;
 	}
+}
+
+void RenderContext::createDebugUtils() {
+    debugUtils.vkSetObjectName = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>
+        (vkGetInstanceProcAddr(instance, "vkSetDebugUtilsObjectNameEXT"));
+    return;
 }

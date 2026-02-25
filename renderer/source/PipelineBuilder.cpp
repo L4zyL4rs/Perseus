@@ -1,4 +1,5 @@
 #include "PipelineBuilder.h"
+#include "VulkanHelper.h"
 
 void PipelineBuilder::setDefaults(PipelineManager* m, PipelineType t)
 {
@@ -175,6 +176,10 @@ void PipelineBuilder::addDescriptor(VkDescriptorSetLayout layout)
 	descriptorSetLayouts.push_back(layout);
 }
 
+void PipelineBuilder::setPipelineDebugLabel(std::string label) {
+   debugLabel = label;
+}
+
 void PipelineBuilder::build()
 {
 	//VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -214,6 +219,7 @@ void PipelineBuilder::build()
 		throw std::runtime_error("failed to create pipeline!");
 	}
 
+    context->setDebugLabel(VK_OBJECT_TYPE_PIPELINE, bundle.pipeline, debugLabel);
 
 	for (auto& module : shaderStages) {
 		vkDestroyShaderModule(context->device, module.module, nullptr);

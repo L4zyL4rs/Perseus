@@ -22,6 +22,7 @@ void FontRenderer::createTextGraphicsPipeline() {
     textTemplate.addFragShader("assets/shaders/textFrag.spv");
     textTemplate.setVertexFormat(CharacterCoordinates::getBindingDescription(), CharacterCoordinates::getAttributeDescriptions());
     textTemplate.addDescriptor(descriptorAllocator->layouts.fontSampler);
+    textTemplate.setPipelineDebugLabel("Text Pipeline");
 
     textTemplate.build();
 }

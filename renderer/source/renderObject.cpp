@@ -31,6 +31,7 @@ void ObjectManager::createMeshGraphicsPipeline() {
     meshTemplate.addDescriptor(descriptorAllocator->layouts.meshAndSampler);
     meshTemplate.setVertexFormat(Vertex::getBindingDescription(), Vertex::getAttributeDescriptions());
     meshTemplate.enablePushConstants(sizeof(MeshPushConstant));
+    meshTemplate.setPipelineDebugLabel("Opaque Pipeline");
 
     meshTemplate.build();
 }

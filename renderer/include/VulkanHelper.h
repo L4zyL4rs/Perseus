@@ -1,9 +1,11 @@
 #pragma once
 #include "RenderContext.h"
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <iostream>
 #include <ft2build.h>
+#include <vulkan/vulkan_core.h>
 #include "glm_config.h"
 #include FT_FREETYPE_H
 
@@ -51,6 +53,7 @@ const inline PixelFormatInfo* lookupParameters(uint32_t channels, uint32_t bytes
 inline std::ostream& operator<<(std::ostream& out, glm::mat4 in);
 inline std::ostream& operator<<(std::ostream& out, glm::vec4 in);
 inline std::ostream& operator<<(std::ostream& out, glm::vec3 in);
+
 
 class VulkanHelper
 {
