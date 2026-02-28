@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 #include "AppWindow.h"
 #include "vma.h"
 
@@ -30,6 +31,12 @@ struct QueueFamilyIndices {
 
 struct DebugUtils {
     PFN_vkSetDebugUtilsObjectNameEXT vkSetObjectName = nullptr;
+    PFN_vkQueueBeginDebugUtilsLabelEXT vkQueueBeginLabel = nullptr;
+    PFN_vkQueueEndDebugUtilsLabelEXT vkQueueEndLabel = nullptr;
+    PFN_vkQueueInsertDebugUtilsLabelEXT vkQueueInsertLabel = nullptr;
+    PFN_vkCmdBeginDebugUtilsLabelEXT vkCmdBeginLabel = nullptr;
+    PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndLabel = nullptr;
+    PFN_vkCmdInsertDebugUtilsLabelEXT vkCmdInsertLabel = nullptr;
 };
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
@@ -74,6 +81,14 @@ public:
             throw std::runtime_error("Failed to set debug label!");
         }
     }
+
+    void QueueBeginLabel(VkQueue queue, const std::string& label);
+    void QueueEndLabel(VkQueue queue);
+    void QueueInsertLabel(VkQueue queue, const std::string& label);
+    void CmdBeginLabel(VkCommandBuffer buffer, const std::string& label);
+    void CmdEndLabel(VkCommandBuffer buffer);
+    void CmdInsertLabel(VkCommandBuffer buffer, const std::string& label);
+
 private:
     DebugUtils debugUtils{};
 	void pickPhysicalDevice();

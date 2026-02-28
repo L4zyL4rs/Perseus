@@ -370,5 +370,77 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
 void RenderContext::createDebugUtils() {
     debugUtils.vkSetObjectName = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>
         (vkGetInstanceProcAddr(instance, "vkSetDebugUtilsObjectNameEXT"));
+    debugUtils.vkQueueBeginLabel = reinterpret_cast<PFN_vkQueueBeginDebugUtilsLabelEXT>
+        (vkGetInstanceProcAddr(instance, "vkQueueBeginDebugUtilsLabelEXT"));
+    debugUtils.vkQueueEndLabel = reinterpret_cast<PFN_vkQueueEndDebugUtilsLabelEXT>
+        (vkGetInstanceProcAddr(instance, "vkQueueEndDebugUtilsLabel"));
+    debugUtils.vkQueueInsertLabel = reinterpret_cast<PFN_vkQueueInsertDebugUtilsLabelEXT>
+        (vkGetInstanceProcAddr(instance, "vkQueueInsertDebugUtilsLabel"));
+    debugUtils.vkCmdBeginLabel = reinterpret_cast<PFN_vkCmdBeginDebugUtilsLabelEXT>
+        (vkGetInstanceProcAddr(instance, "vkCmdBeginDebugUtilsLabel"));
+    debugUtils.vkCmdEndLabel = reinterpret_cast<PFN_vkCmdEndDebugUtilsLabelEXT>
+        (vkGetInstanceProcAddr(instance, "vkCmdEndDebugUtilsLabel"));
+    debugUtils.vkCmdInsertLabel = reinterpret_cast<PFN_vkCmdInsertDebugUtilsLabelEXT>
+        (vkGetInstanceProcAddr(instance, "vkCmdInsertDebugUtilsLabel"));
     return;
+}
+
+void RenderContext::QueueBeginLabel(VkQueue queue, const std::string& label) {
+    VkDebugUtilsLabelEXT labelInfo {};
+    labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    labelInfo.pNext = NULL;
+    labelInfo.pLabelName = label.c_str();
+    labelInfo.color[0] = 0.0;
+    labelInfo.color[1] = 0.0;
+    labelInfo.color[2] = 0.0;
+    labelInfo.color[3] = 0.0;
+
+    debugUtils.vkQueueBeginLabel(queue, &labelInfo);
+}
+
+void RenderContext::QueueEndLabel(VkQueue queue) {
+    debugUtils.vkQueueEndLabel(queue);
+}
+
+void RenderContext::QueueInsertLabel(VkQueue queue, const std::string& label) {
+    VkDebugUtilsLabelEXT labelInfo {};
+    labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    labelInfo.pNext = NULL;
+    labelInfo.pLabelName = label.c_str();
+    labelInfo.color[0] = 0.0;
+    labelInfo.color[1] = 0.0;
+    labelInfo.color[2] = 0.0;
+    labelInfo.color[3] = 0.0;
+
+    debugUtils.vkQueueInsertLabel(queue, &labelInfo);
+}
+
+void RenderContext::CmdBeginLabel(VkCommandBuffer buffer, const std::string& label) {
+    VkDebugUtilsLabelEXT labelInfo {};
+    labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    labelInfo.pNext = NULL;
+    labelInfo.pLabelName = label.c_str();
+    labelInfo.color[0] = 0.0;
+    labelInfo.color[1] = 0.0;
+    labelInfo.color[2] = 0.0;
+    labelInfo.color[3] = 0.0;
+
+    debugUtils.vkCmdBeginLabel(buffer, &labelInfo);
+}
+
+void RenderContext::CmdEndLabel(VkCommandBuffer buffer) {
+    debugUtils.vkCmdEndLabel(buffer);
+}
+
+void RenderContext::CmdInsertLabel(VkCommandBuffer buffer, const std::string& label) {
+    VkDebugUtilsLabelEXT labelInfo {};
+    labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    labelInfo.pNext = NULL;
+    labelInfo.pLabelName = label.c_str();
+    labelInfo.color[0] = 0.0;
+    labelInfo.color[1] = 0.0;
+    labelInfo.color[2] = 0.0;
+    labelInfo.color[3] = 0.0;
+
+    debugUtils.vkCmdInsertLabel(buffer, &labelInfo);
 }

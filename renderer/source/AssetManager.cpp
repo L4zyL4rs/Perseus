@@ -384,7 +384,7 @@ void AssetManager::createTextureDescriptorSets(TextureHandle handle)
 
 	texture.descriptors.resize(*(descriptorAllocator->MAX_FRAMES_IN_FLIGHT));
     std::cout << "Creating " << *(descriptorAllocator->MAX_FRAMES_IN_FLIGHT) << " texture descriptor sets\n";
-		descriptorAllocator->allocate(descriptorAllocator->layouts.meshAndSampler, texture.descriptors.data(), *(descriptorAllocator->MAX_FRAMES_IN_FLIGHT));
+		descriptorAllocator->allocate(descriptorAllocator->layouts.meshAndSampler, texture.descriptors.data(), *(descriptorAllocator->MAX_FRAMES_IN_FLIGHT), "Mesh and Sampler");
 
 	for (size_t i = 0; i < *(descriptorAllocator->MAX_FRAMES_IN_FLIGHT); i++) {
 
@@ -593,7 +593,7 @@ Bitmap AssetManager::loadFontBitmap(const std::string& fontPath, int fontSize, F
 void AssetManager::createAtlasDescriptorSet(FontResource& resource)
 {
 	resource.atlasDescriptorSet.resize(*(descriptorAllocator->MAX_FRAMES_IN_FLIGHT));
-	descriptorAllocator->allocate(descriptorAllocator->layouts.fontSampler, resource.atlasDescriptorSet.data(), *descriptorAllocator->MAX_FRAMES_IN_FLIGHT);
+	descriptorAllocator->allocate(descriptorAllocator->layouts.fontSampler, resource.atlasDescriptorSet.data(), *descriptorAllocator->MAX_FRAMES_IN_FLIGHT, "Atlas");
 
 	for (size_t i = 0; i < *(descriptorAllocator->MAX_FRAMES_IN_FLIGHT); i++) {
 		VkDescriptorImageInfo imageInfo{};

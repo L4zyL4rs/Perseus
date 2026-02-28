@@ -17,7 +17,7 @@ public:
 
     DescriptorAllocator(RenderContext* c, uint32_t mO, uint32_t* MFIF);
     void reset();
-    void allocate(VkDescriptorSetLayout layout, VkDescriptorSet *pDescriptorSet, size_t count);
+    void allocate(VkDescriptorSetLayout layout, VkDescriptorSet *pDescriptorSet, size_t count, std::string = "");
 
 private:
     void createDescriptorSetLayouts();

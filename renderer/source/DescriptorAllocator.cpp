@@ -1,5 +1,6 @@
 #include "DescriptorAllocator.h"
 #include <array>
+#include <vulkan/vulkan_core.h>
 
 void DescriptorAllocator::createDescriptorPool() {
     std::array<VkDescriptorPoolSize, 4> poolSizes{};
@@ -35,17 +36,18 @@ void DescriptorAllocator::reset() {
     destroyDescriptorSetLayouts();
 }
 
-void DescriptorAllocator::allocate(VkDescriptorSetLayout layout, VkDescriptorSet* pDescriptorSet, size_t count) {
-    std::vector<VkDescriptorSetLayout> layoutsx(count, layout);
+void DescriptorAllocator::allocate(VkDescriptorSetLayout layout, VkDescriptorSet* pDescriptorSet, size_t count, std::string name) {
+    std::vector<VkDescriptorSetLayout> layoutsVector(count, layout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = pool;
     allocInfo.descriptorSetCount = count;
-    allocInfo.pSetLayouts = layoutsx.data();
+    allocInfo.pSetLayouts = layoutsVector.data();
 
     if (vkAllocateDescriptorSets(context->device, &allocInfo, pDescriptorSet) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
+    context->setDebugLabel(VK_OBJECT_TYPE_DESCRIPTOR_SET, *pDescriptorSet, name); 
 }
 
 void DescriptorAllocator::destroyDescriptorSetLayouts() {
