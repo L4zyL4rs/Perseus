@@ -1,5 +1,7 @@
 #include "FontRenderer.h"
+#include "FrameManager.h"
 #include <unordered_map>
+#include <vulkan/vulkan_core.h>
 
 FontRenderer::FontRenderer(RenderContext* c, DescriptorAllocator* dA, PipelineManager* pM, AssetManager* aM, CommandPool* cP)
     : context(c)
@@ -23,6 +25,7 @@ void FontRenderer::createTextGraphicsPipeline() {
     textTemplate.setVertexFormat(CharacterCoordinates::getBindingDescription(), CharacterCoordinates::getAttributeDescriptions());
     textTemplate.addDescriptor(descriptorAllocator->layouts.fontSampler);
     textTemplate.setPipelineDebugLabel("Text Pipeline");
+    textTemplate.setAttachmentFormats(1, &pipelineManager->swapchain->imageFormat, VK_FORMAT_UNDEFINED, VK_FORMAT_D32_SFLOAT);
 
     textTemplate.build();
 }

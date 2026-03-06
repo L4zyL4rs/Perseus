@@ -58,7 +58,8 @@ public:
 	};
 
 	const std::vector<const char*> deviceExtensions = {
-				VK_KHR_SWAPCHAIN_EXTENSION_NAME
+				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+                VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
 	};
 
 	RenderContext(AppWindow* w);

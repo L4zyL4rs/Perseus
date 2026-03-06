@@ -32,4 +32,7 @@ public:
     void createSyncObjects();
     // Insane naming
     void drawDrawItems(const std::vector<DrawItem>& items, VkCommandBuffer commandBuffer, uint32_t currentFrame);
+private:
+    void transitionLayoutPresent(uint32_t imageIndex);
+    void transitionLayoutRender(uint32_t imageIndex);
 };

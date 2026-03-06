@@ -289,7 +289,7 @@ void AssetManager::createTextureImage(TextureHandle handle)
 	vkUnmapMemory(context->device, stagingBufferMemory);
 
 	VulkanHelper::createImage(context, texWidth, texHeight, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, texture.image, texture.imageMemory, &texture.imageAllocation);
-	VulkanHelper::transitionImageLayout(context, commandPool->get(), texture.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture.mipLevels);
+	VulkanHelper::transitionImageLayout(context, commandPool->get(), texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture.mipLevels);
 	VulkanHelper::copyBufferToImage(context, commandPool->get(), stagingBuffer, texture.image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 	VulkanHelper::generateMipmaps(context, commandPool->get(), texture.image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, texture.mipLevels);
 
@@ -492,9 +492,9 @@ void AssetManager::createAtlasImage(FontResource& fontResource, Bitmap& bitmap)
 	VulkanHelper::createImage(context, atlasWidth, atlasHeight, 1, VK_SAMPLE_COUNT_1_BIT, bitmap.format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, fontResource.atlasImage, fontResource.atlasImageMemory, &fontResource.atlasImageAllocation);
 
 	std::cout << "\nStaging Buffer: " << reinterpret_cast<uint64_t>(imageStagingBuffer);
-	VulkanHelper::transitionImageLayout(context, commandPool->get(), fontResource.atlasImage, bitmap.format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
+	VulkanHelper::transitionImageLayout(context, commandPool->get(), fontResource.atlasImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
 	VulkanHelper::copyBufferToImage(context, commandPool->get(), imageStagingBuffer, fontResource.atlasImage, static_cast<uint32_t>(atlasWidth), static_cast<uint32_t>(atlasHeight));
-	VulkanHelper::transitionImageLayout(context, commandPool->get(), fontResource.atlasImage, bitmap.format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
+	VulkanHelper::transitionImageLayout(context, commandPool->get(), fontResource.atlasImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 	//VulkanHelper::generateMipmaps(pFontBundle->atlasImage, VK_FORMAT_R8_UINT, atlasWidth, atlasHeight, 1);
 
 	vkDestroyBuffer(context->device, imageStagingBuffer, nullptr);

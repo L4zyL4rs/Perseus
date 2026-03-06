@@ -1,11 +1,14 @@
 #include "FrameManager.h"
+#include <iterator>
+#include <utility>
+#include <vulkan/vulkan_core.h>
 
 FrameManager::FrameManager(Swapchain* s) : swapchain(s)
 , context(swapchain->context)
 , window(context->window)
 , pipelineManager(context, swapchain)
 , commandPool(context)
-, MAX_FRAMES_IN_FLIGHT(3)
+, MAX_FRAMES_IN_FLIGHT(2)
 , descriptorAllocator(context, MAX_OBJECTS, &MAX_FRAMES_IN_FLIGHT)
 , assetManager(context, &commandPool, &descriptorAllocator)
 , objectManager(&descriptorAllocator, &pipelineManager, &commandPool, &assetManager, &MAX_FRAMES_IN_FLIGHT)
@@ -58,22 +61,57 @@ void FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
 		throw std::runtime_error("failed to begin recording command buffer!");
 	}
+    std::cout << "Current frame: " << currentFrame 
+            << "\nImage Index: " << imageIndex << "\n";
+    transitionLayoutRender(imageIndex);
 
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = swapchain->renderPass;
-	renderPassInfo.framebuffer = swapchain->framebuffers[imageIndex];
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = swapchain->extent;
-
-	std::array<VkClearValue, 2> clearValues{};
-	clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+    std::array<VkClearValue, 2> clearValues{};
+	clearValues[0].color = { {0.0f, 0.0f, 1.0f, 1.0f} };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 
-	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderPassInfo.pClearValues = clearValues.data();
+    VkRenderingAttachmentInfo colorAttachmentInfo{};
+    colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    colorAttachmentInfo.imageView = swapchain->colorImageView;
+    colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachmentInfo.resolveImageView = swapchain->imageViews[imageIndex];
+    colorAttachmentInfo.resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachmentInfo.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
+    colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachmentInfo.clearValue.color = { {0.0f, 0.0f, 0.0f, 0.0f} };
+    //colorAttachmentInfo.clearValue.depthStencil = {1.0, 0};
+    
+    VkRenderingAttachmentInfo depthStencilAttachmentInfo {};
+    depthStencilAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    depthStencilAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthStencilAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthStencilAttachmentInfo.imageView = swapchain->depthImageView;
+    depthStencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depthStencilAttachmentInfo.clearValue = {1.0, 0.0};
 
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    VkRenderingInfoKHR renderInfo {};
+    renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+    renderInfo.renderArea.offset = {0, 0};
+    renderInfo.renderArea.extent = swapchain->extent;
+    renderInfo.layerCount = 1;
+    renderInfo.colorAttachmentCount = 1;
+    renderInfo.pColorAttachments = &colorAttachmentInfo;
+    renderInfo.pDepthAttachment = &depthStencilAttachmentInfo;
+
+    vkCmdBeginRendering(commandBuffer, &renderInfo);
+	//VkRenderPassBeginInfo renderPassInfo{};
+	//renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	//renderPassInfo.renderPass = swapchain->renderPass;
+	//renderPassInfo.framebuffer = swapchain->framebuffers[imageIndex];
+	//renderPassInfo.renderArea.offset = { 0, 0 };
+	//renderPassInfo.renderArea.extent = swapchain->extent;
+
+	
+
+	//renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	//renderPassInfo.pClearValues = clearValues.data();
+
+	//vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport{};
 	viewport.x = 0.0f;
@@ -90,12 +128,9 @@ void FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 	scissor.extent = swapchain->extent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	// Passing 0 instead of the current Frame in flight is bad
-	// Rendering itself is done "correctly" now, but everything gets rendered at origin because physics is not running
-
 	drawDrawItems(drawItems, commandBuffer, currentFrame);
-
-	vkCmdEndRenderPass(commandBuffer);
+	vkCmdEndRendering(commandBuffer);
+    transitionLayoutPresent(imageIndex);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer!");
@@ -118,7 +153,6 @@ void FrameManager::draw(std::vector<DrawItem>& drawItems)
 	}
 
 	vkResetFences(context->device, 1, &inFlightFences[currentFrame]);
-
 	vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 	recordCommandBuffer(commandBuffers[currentFrame], imageIndex, drawItems);
 
@@ -214,3 +248,87 @@ void FrameManager::drawDrawItems(const std::vector<DrawItem>& items, VkCommandBu
 	}
 }
 
+void FrameManager::transitionLayoutPresent(uint32_t imageIndex) {
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = swapchain->images[imageIndex];
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    vkCmdPipelineBarrier(commandBuffers[currentFrame], 
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        1,
+        &barrier);
+}
+
+
+void FrameManager::transitionLayoutRender(uint32_t imageIndex) {
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = swapchain->images[imageIndex];
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    vkCmdPipelineBarrier(commandBuffers[currentFrame],
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        1,
+        &barrier);
+
+    barrier.image = swapchain->colorImage;
+
+    vkCmdPipelineBarrier(commandBuffers[currentFrame],
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        1,
+        &barrier);
+
+    barrier.image = swapchain->depthImage;
+    barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT
+                            | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    vkCmdPipelineBarrier(commandBuffers[currentFrame],
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+            0,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            1,
+            &barrier); 
+}

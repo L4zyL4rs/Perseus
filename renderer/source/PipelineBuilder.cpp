@@ -1,5 +1,7 @@
 #include "PipelineBuilder.h"
 #include "VulkanHelper.h"
+#include <iterator>
+#include <vulkan/vulkan_core.h>
 
 void PipelineBuilder::setDefaults(PipelineManager* m, PipelineType t)
 {
@@ -40,8 +42,7 @@ void PipelineBuilder::setDefaults(PipelineManager* m, PipelineType t)
 
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = context->msaaSamples,
-		multisampling.minSampleShading = 1.0f;					//?????????????
+	multisampling.rasterizationSamples = context->msaaSamples;
 	multisampling.pSampleMask = nullptr;
 	multisampling.alphaToCoverageEnable = VK_FALSE;
 	multisampling.alphaToOneEnable = VK_FALSE;
@@ -180,6 +181,14 @@ void PipelineBuilder::setPipelineDebugLabel(std::string label) {
    debugLabel = label;
 }
 
+void PipelineBuilder::setAttachmentFormats(uint32_t attachmentCount, VkFormat* colorFormats, VkFormat stencilFormat, VkFormat depthFormat) {
+    renderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+    renderingInfo.colorAttachmentCount = attachmentCount;
+    renderingInfo.pColorAttachmentFormats = colorFormats;
+    renderingInfo.stencilAttachmentFormat = stencilFormat;
+    renderingInfo.depthAttachmentFormat = depthFormat;
+}
+
 void PipelineBuilder::build()
 {
 	//VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -212,8 +221,9 @@ void PipelineBuilder::build()
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicStateInfo;
 	pipelineInfo.layout = bundle.layout;
-	pipelineInfo.renderPass = swapchain->renderPass;
+	pipelineInfo.renderPass = nullptr;
 	pipelineInfo.subpass = 0;
+    pipelineInfo.pNext = &renderingInfo;
 
 	if (vkCreateGraphicsPipelines(context->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &bundle.pipeline) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline!");

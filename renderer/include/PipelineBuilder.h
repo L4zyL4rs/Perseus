@@ -1,5 +1,6 @@
 #pragma once
 #include "PipelineManager.h"
+#include <vulkan/vulkan_core.h>
 
 
 class PipelineBuilder {
@@ -16,6 +17,7 @@ class PipelineBuilder {
 	VkPipelineMultisampleStateCreateInfo multisampling{};
 	VkPipelineViewportStateCreateInfo viewportState{};
 	std::vector<VkDynamicState> dynamicStates;
+    VkPipelineRenderingCreateInfo renderingInfo{};
 	VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	VkPushConstantRange pushConstant{};
@@ -43,5 +45,6 @@ public:
 	void setVertexFormat(VkVertexInputBindingDescription binding, std::vector<VkVertexInputAttributeDescription> attributes);
 	void addDescriptor(VkDescriptorSetLayout layout);
     void setPipelineDebugLabel(std::string label);
+    void setAttachmentFormats(uint32_t attachmentCount, VkFormat* colorFormats, VkFormat stencilFormat, VkFormat depthFormat);
 	void build();
 };
