@@ -107,7 +107,9 @@ VkImageView VulkanHelper::createImageView(RenderContext* context, VkImage image,
     return imageView;
 }
 
-void VulkanHelper::createImage(RenderContext* context, uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, VmaAllocation* pAllocation) {
+// properties only needs to be passed because I did not care to change the line, it is unused
+// Same with imageMemory
+void VulkanHelper::createImage(const RenderContext* context, uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, VmaAllocation* pAllocation) {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;

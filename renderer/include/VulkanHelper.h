@@ -66,7 +66,7 @@ public:
 	static void endSingleTimeCommands(RenderContext* context, VkCommandPool commandPool, VkCommandBuffer commandBuffer);
 	static void copyBuffer(RenderContext* context, VkCommandPool commandPool, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	static VkImageView createImageView(RenderContext* context, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
-	static void createImage(RenderContext* context, uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, VmaAllocation* pAllocation);
+	static void createImage(const RenderContext* context, uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, VmaAllocation* pAllocation);
 	static void transitionImageLayout(RenderContext* context, VkCommandPool commandPool, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
 	static void copyBufferToImage(RenderContext* context, VkCommandPool commandPool, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	static void generateMipmaps(RenderContext* context, VkCommandPool commandPool, VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);

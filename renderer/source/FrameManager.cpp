@@ -291,6 +291,8 @@ void FrameManager::transitionLayoutRender(uint32_t imageIndex) {
     barrier.subresourceRange.layerCount = 1;
     barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+    // Batching barriers might be more favourable for performance
+    // Apparently, there is CPU overhead
     vkCmdPipelineBarrier(commandBuffers[currentFrame],
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,

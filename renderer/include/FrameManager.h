@@ -36,3 +36,4 @@ private:
     void transitionLayoutPresent(uint32_t imageIndex);
     void transitionLayoutRender(uint32_t imageIndex);
 };
+
