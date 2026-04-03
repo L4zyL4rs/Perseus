@@ -28,7 +28,7 @@ namespace ecs {
 		void insert(void* source, uint32_t index) {
 			if (index >= reserved) {
 				void* biggerContainer = malloc(componentSize * reserved * 2);
-				std::memcpy(biggerContainer, data, reserved);
+				std::memcpy(biggerContainer, data, componentSize * reserved);
 				reserved *= 2;
 				free(data);
 				data = biggerContainer;
