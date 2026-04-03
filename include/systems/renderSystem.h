@@ -288,7 +288,7 @@ private:
         yOffset *= MOUSESENSE;
 
         cam.yaw += xOffset;
-        cam.pitch += yOffset;
+        cam.pitch -= yOffset;
 
         if (cam.pitch > 89.0f)  {cam.pitch = 89.0f;}
     	if (cam.pitch < -89.0f) {cam.pitch = -89.0f;}
