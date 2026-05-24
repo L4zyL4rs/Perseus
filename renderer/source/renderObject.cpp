@@ -32,7 +32,7 @@ void ObjectManager::createMeshGraphicsPipeline() {
     meshTemplate.setVertexFormat(Vertex::getBindingDescription(), Vertex::getAttributeDescriptions());
     meshTemplate.enablePushConstants(sizeof(MeshPushConstant));
     VkFormat formats[1] = {swapchain->imageFormat};
-    meshTemplate.setAttachmentFormats(1, formats, swapchain->findDepthFormat(), swapchain->findDepthFormat());
+    meshTemplate.setAttachmentFormats(1, formats, VulkanHelper::findDepthFormat(context->physicalDevice), VulkanHelper::findDepthFormat(context->physicalDevice));
     meshTemplate.setPipelineDebugLabel("Opaque Pipeline");
 
     meshTemplate.build();

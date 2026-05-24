@@ -38,7 +38,7 @@ int main() {
 
     ecs::ECSView<EngineControl> controlView(&em);
 
-	for (int i = 0; i < 100; i) {
+	for (int i = 0; i < 10; i) {
 		scheduler.run();
         controlView.update();
         auto itControl = controlView.begin();

@@ -185,7 +185,7 @@ void PipelineBuilder::setAttachmentFormats(uint32_t attachmentCount, VkFormat* c
     renderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
     renderingInfo.colorAttachmentCount = attachmentCount;
     renderingInfo.pColorAttachmentFormats = colorFormats;
-    renderingInfo.stencilAttachmentFormat = stencilFormat;
+    renderingInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED; //stencilFormat;
     renderingInfo.depthAttachmentFormat = depthFormat;
 }
 

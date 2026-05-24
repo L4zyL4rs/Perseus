@@ -1,6 +1,8 @@
 #pragma once
 #include "renderObject.h"
 #include "FontRenderer.h"
+#include "ImageManager.h"
+#include "MeshPass.h"
 
 extern uint32_t MAX_OBJECTS;
 
@@ -16,6 +18,8 @@ public:
     AssetManager assetManager;
     ObjectManager objectManager;
     FontRenderer fontRenderer;
+    ImageManager& imageManager;
+    MeshPass meshPass;
     std::vector<VkCommandBuffer> commandBuffers{};
     std::vector<VkSemaphore> imageAvailableSemaphores{};
     std::vector<VkSemaphore> renderFinishedSemaphores{};
@@ -35,4 +39,6 @@ public:
 private:
     void transitionLayoutPresent(uint32_t imageIndex);
     void transitionLayoutRender(uint32_t imageIndex);
+    void resolve(VkCommandBuffer cmd, uint32_t imageIndex);
+    void recreateSwapchain();
 };

@@ -1,5 +1,4 @@
 #pragma once
-#include "AssetManager.h"
 #include "PipelineManager.h"
 
 // No lookup anymore, everything needed to draw is in here

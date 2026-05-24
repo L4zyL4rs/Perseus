@@ -1,18 +1,23 @@
 #include "FrameManager.h"
+#include <complex>
 #include <iterator>
+#include <regex>
 #include <utility>
 #include <vulkan/vulkan_core.h>
 
-FrameManager::FrameManager(Swapchain* s) : swapchain(s)
-, context(swapchain->context)
-, window(context->window)
-, pipelineManager(context, swapchain)
-, commandPool(context)
-, MAX_FRAMES_IN_FLIGHT(2)
-, descriptorAllocator(context, MAX_OBJECTS, &MAX_FRAMES_IN_FLIGHT)
-, assetManager(context, &commandPool, &descriptorAllocator)
-, objectManager(&descriptorAllocator, &pipelineManager, &commandPool, &assetManager, &MAX_FRAMES_IN_FLIGHT)
-, fontRenderer(context, &descriptorAllocator, &pipelineManager, &assetManager, &commandPool)
+FrameManager::FrameManager(Swapchain* s) : swapchain(s),
+    context(swapchain->context),
+    window(context->window),
+    pipelineManager(context, swapchain),
+    commandPool(context), 
+    MAX_FRAMES_IN_FLIGHT(2),
+    descriptorAllocator(context, MAX_OBJECTS, &MAX_FRAMES_IN_FLIGHT),
+    assetManager(context, &commandPool, &descriptorAllocator),
+    objectManager(&descriptorAllocator, &pipelineManager, &commandPool, &assetManager, &MAX_FRAMES_IN_FLIGHT),
+    fontRenderer(context, &descriptorAllocator, &pipelineManager, &assetManager, &commandPool),
+    imageManager(swapchain->imageManager),
+    meshPass(imageManager)
+
 {
 	createCommandBuffers();
 	createSyncObjects();
@@ -63,74 +68,15 @@ void FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 	}
     std::cout << "Current frame: " << currentFrame 
             << "\nImage Index: " << imageIndex << "\n";
+    //transitionLayoutRender(imageIndex);
+
     transitionLayoutRender(imageIndex);
 
-    std::array<VkClearValue, 2> clearValues{};
-	clearValues[0].color = { {0.0f, 0.0f, 1.0f, 1.0f} };
-	clearValues[1].depthStencil = { 1.0f, 0 };
+    meshPass.execute(commandBuffer, pipelineManager);
 
-    VkRenderingAttachmentInfo colorAttachmentInfo{};
-    colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-    colorAttachmentInfo.imageView = swapchain->colorImageView;
-    colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    colorAttachmentInfo.resolveImageView = swapchain->imageViews[imageIndex];
-    colorAttachmentInfo.resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    colorAttachmentInfo.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
-    colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachmentInfo.clearValue.color = { {0.0f, 0.0f, 0.0f, 0.0f} };
-    //colorAttachmentInfo.clearValue.depthStencil = {1.0, 0};
-    
-    VkRenderingAttachmentInfo depthStencilAttachmentInfo {};
-    depthStencilAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-    depthStencilAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthStencilAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthStencilAttachmentInfo.imageView = swapchain->depthImageView;
-    depthStencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthStencilAttachmentInfo.clearValue = {1.0, 0.0};
+    resolve(commandBuffer, imageIndex);
 
-    VkRenderingInfoKHR renderInfo {};
-    renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-    renderInfo.renderArea.offset = {0, 0};
-    renderInfo.renderArea.extent = swapchain->extent;
-    renderInfo.layerCount = 1;
-    renderInfo.colorAttachmentCount = 1;
-    renderInfo.pColorAttachments = &colorAttachmentInfo;
-    renderInfo.pDepthAttachment = &depthStencilAttachmentInfo;
-
-    vkCmdBeginRendering(commandBuffer, &renderInfo);
-	//VkRenderPassBeginInfo renderPassInfo{};
-	//renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	//renderPassInfo.renderPass = swapchain->renderPass;
-	//renderPassInfo.framebuffer = swapchain->framebuffers[imageIndex];
-	//renderPassInfo.renderArea.offset = { 0, 0 };
-	//renderPassInfo.renderArea.extent = swapchain->extent;
-
-	
-
-	//renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	//renderPassInfo.pClearValues = clearValues.data();
-
-	//vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	VkViewport viewport{};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(swapchain->extent.width);
-	viewport.height = static_cast<float>(swapchain->extent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-	VkRect2D scissor{};
-	scissor.offset = { 0, 0 };
-	scissor.extent = swapchain->extent;
-	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-	drawDrawItems(drawItems, commandBuffer, currentFrame);
-	vkCmdEndRendering(commandBuffer);
-    transitionLayoutPresent(imageIndex);
+    //transitionLayoutPresent(imageIndex);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer!");
@@ -139,13 +85,23 @@ void FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 
 void FrameManager::draw(std::vector<DrawItem>& drawItems)
 {
+    // FOLLOWING LINES SHOULD NOT BE HERE, JUST FOR NOW
+    meshPass.prepare();
+    for(auto& item : drawItems) {
+        meshPass.addDrawItem(item);
+    }
+
+    std::cout << "Found extent of " << swapchain->extent.height << " x " << swapchain->extent.width << "\n";
+
 	vkWaitForFences(context->device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 	uint32_t imageIndex;    // SPECIFIES WHICH IMAGE IS DRAWN TO AND PRESENTED
 	VkResult result = vkAcquireNextImageKHR(context->device, swapchain->swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        std::cout << "Recreating Swapchain!\n";
 		swapchain->recreateSwapChain();
+        imageManager.recreateSwapchain();
 		return;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -190,6 +146,7 @@ void FrameManager::draw(std::vector<DrawItem>& drawItems)
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->framebufferResized) {
 		window->framebufferResized = false;
 		swapchain->recreateSwapChain();
+        imageManager.recreateSwapchain();
 	}
 	else if (result != VK_SUCCESS) {
 		throw std::runtime_error("failed to present swap chain image!");
@@ -251,7 +208,7 @@ void FrameManager::drawDrawItems(const std::vector<DrawItem>& items, VkCommandBu
 void FrameManager::transitionLayoutPresent(uint32_t imageIndex) {
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
     barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -280,7 +237,7 @@ void FrameManager::transitionLayoutRender(uint32_t imageIndex) {
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = swapchain->images[imageIndex];
@@ -302,33 +259,95 @@ void FrameManager::transitionLayoutRender(uint32_t imageIndex) {
         1,
         &barrier);
 
-    barrier.image = swapchain->colorImage;
-
-    vkCmdPipelineBarrier(commandBuffers[currentFrame],
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        0,
-        0,
-        nullptr,
-        0,
-        nullptr,
-        1,
-        &barrier);
-
-    barrier.image = swapchain->depthImage;
-    barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT
-                            | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    barrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    vkCmdPipelineBarrier(commandBuffers[currentFrame],
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-            0,
-            0,
-            nullptr,
-            0,
-            nullptr,
-            1,
-            &barrier); 
+    return;
 }
+
+void FrameManager::resolve(VkCommandBuffer cmd, uint32_t imageIndex) {
+    // Transition color image GENERAL -> TRANSFER_SRC_OPTIMAL
+    VkImageMemoryBarrier2 colorBarrier{};
+    colorBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    colorBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    colorBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+    colorBarrier.dstStageMask = VK_PIPELINE_STAGE_2_RESOLVE_BIT;
+    colorBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT;
+    colorBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+    colorBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    colorBarrier.image = meshPass.getOutputImage();
+    colorBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    colorBarrier.subresourceRange.baseMipLevel = 0;
+    colorBarrier.subresourceRange.levelCount = 1;
+    colorBarrier.subresourceRange.baseArrayLayer = 0;
+    colorBarrier.subresourceRange.layerCount = 1;
+
+    // Transition swapchain image COLOR_ATTACHMENT_OPTIMAL -> TRANSFER_DST_OPTIMAL
+    VkImageMemoryBarrier2 swapBarrier{};
+    swapBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    swapBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    swapBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+    swapBarrier.dstStageMask = VK_PIPELINE_STAGE_2_RESOLVE_BIT;
+    swapBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    swapBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    swapBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    swapBarrier.image = swapchain->images[imageIndex];
+    swapBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    swapBarrier.subresourceRange.baseMipLevel = 0;
+    swapBarrier.subresourceRange.levelCount = 1;
+    swapBarrier.subresourceRange.baseArrayLayer = 0;
+    swapBarrier.subresourceRange.layerCount = 1;
+
+    std::array<VkImageMemoryBarrier2, 2> barriers = {colorBarrier, swapBarrier};
+
+    VkDependencyInfo depInfo{};
+    depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+    depInfo.imageMemoryBarrierCount = static_cast<uint32_t>(barriers.size());
+    depInfo.pImageMemoryBarriers = barriers.data();
+    vkCmdPipelineBarrier2(cmd, &depInfo);
+
+    VkImageResolve region{};
+    region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.srcSubresource.mipLevel = 0;
+    region.srcSubresource.baseArrayLayer = 0;
+    region.srcSubresource.layerCount = 1;
+    region.srcOffset = {0, 0, 0};
+    region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.dstSubresource.mipLevel = 0;
+    region.dstSubresource.baseArrayLayer = 0;
+    region.dstSubresource.layerCount = 1;
+    region.dstOffset = {0, 0, 0};
+    region.extent = {swapchain->extent.width, swapchain->extent.height, 1};
+
+    vkCmdResolveImage(cmd,
+        meshPass.getOutputImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        swapchain->images[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1, &region);
+
+    // Transition swapchain image TRANSFER_DST_OPTIMAL -> PRESENT_SRC_KHR
+    VkImageMemoryBarrier2 presentBarrier{};
+    presentBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    presentBarrier.srcStageMask = VK_PIPELINE_STAGE_2_RESOLVE_BIT;
+    presentBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    presentBarrier.dstStageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+    presentBarrier.dstAccessMask = VK_ACCESS_2_NONE;
+    presentBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    presentBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    presentBarrier.image = swapchain->images[imageIndex];
+    presentBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    presentBarrier.subresourceRange.baseMipLevel = 0;
+    presentBarrier.subresourceRange.levelCount = 1;
+    presentBarrier.subresourceRange.baseArrayLayer = 0;
+    presentBarrier.subresourceRange.layerCount = 1;
+
+    VkDependencyInfo presentDepInfo{};
+    presentDepInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+    presentDepInfo.imageMemoryBarrierCount = 1;
+    presentDepInfo.pImageMemoryBarriers = &presentBarrier;
+    vkCmdPipelineBarrier2(cmd, &presentDepInfo);
+
+    return;
+}
+
+void FrameManager::recreateSwapchain() {
+    swapchain->recreateSwapChain();
+    imageManager.recreateSwapchain();
+}
+

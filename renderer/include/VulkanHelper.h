@@ -52,6 +52,7 @@ const inline PixelFormatInfo* lookupParameters(uint32_t channels, uint32_t bytes
 	return nullptr;
 }
 
+
 inline std::ostream& operator<<(std::ostream& out, glm::mat4 in);
 inline std::ostream& operator<<(std::ostream& out, glm::vec4 in);
 inline std::ostream& operator<<(std::ostream& out, glm::vec3 in);
@@ -71,5 +72,8 @@ public:
 	static void copyBufferToImage(RenderContext* context, VkCommandPool commandPool, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	static void generateMipmaps(RenderContext* context, VkCommandPool commandPool, VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 	static std::vector<char> readFile(const std::string& filename);
+    static VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features, VkPhysicalDevice device); 
+    static VkFormat findDepthFormat(VkPhysicalDevice device);
 };
+
 

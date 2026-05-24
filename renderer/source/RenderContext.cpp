@@ -305,9 +305,14 @@ void RenderContext::createLogicalDevice()
     VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingInfo {};
     dynamicRenderingInfo.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
     dynamicRenderingInfo.dynamicRendering = VK_TRUE;
-    dynamicRenderingInfo.pNext = NULL;
 
     createInfo.pNext = &dynamicRenderingInfo;
+
+    VkPhysicalDeviceSynchronization2Features synchronization2Info {};
+    synchronization2Info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+    synchronization2Info.synchronization2 = true;
+    synchronization2Info.pNext = nullptr;
+    dynamicRenderingInfo.pNext = &synchronization2Info;
 
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create logical device!");

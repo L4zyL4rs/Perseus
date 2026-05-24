@@ -72,6 +72,7 @@ add_library(VulkanRenderer
     source/AppWindow.cpp
     source/AssetManager.cpp
     source/int64vector.cpp
+    source/ImageManager.cpp
     source/PipelineBuilder.cpp)
 
 target_include_directories(VulkanRenderer PUBLIC

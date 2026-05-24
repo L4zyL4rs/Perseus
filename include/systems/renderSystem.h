@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "EngineControl.h"
 #include "TextElement.h"
+#include "Light.h"
 #include <iterator>
 #include <string>
 #include <vector>
@@ -44,6 +45,8 @@ public:
         std::vector<ecs::EntityBuilder> cmd;
         std::string robotoslab = "robotoslab";
         cmd.emplace_back(ecs::EntityBuilder(entityManager, &diagnostics).with<TextElement128>(TextElement128("text", frameManager.assetManager.loadFont(robotoslab, 30), glm::vec2(0,0), glm::vec4(1))));
+        LightSource light({0,0,0}, {1,1,1,1});
+        cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light));
         return cmd;
     }
 

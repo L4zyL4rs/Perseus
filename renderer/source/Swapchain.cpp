@@ -1,15 +1,14 @@
 #include "Swapchain.h"
 #include <array>
+#include <vulkan/vulkan_core.h>
 
 Swapchain::Swapchain(RenderContext* c) : context(c)
-, window(context->window)
+, window(context->window), imageManager(*context, extent, imageFormat)
 {
 	createSwapChain();
 	createImageViews();
 	createRenderPass();
-	createDepthResources();
-	createColorResources();
-	createFramebuffers();
+	//createFramebuffers();
 }
 
 void Swapchain::createSwapChain()
@@ -19,6 +18,7 @@ void Swapchain::createSwapChain()
 	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
 	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
 	extent = chooseSwapExtent(swapChainSupport.capabilities);
+    std::cout << "Chosen extent with " << extent.height << " x " << extent.width << "\n";
 
 	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 
@@ -60,12 +60,12 @@ void Swapchain::createSwapChain()
 		throw std::runtime_error("failed to create swap chain!");
 	}
 
+    // First query for number of images, then resize container, then query again
 	vkGetSwapchainImagesKHR(context->device, swapChain, &imageCount, nullptr);
 	images.resize(imageCount);
 	vkGetSwapchainImagesKHR(context->device, swapChain, &imageCount, images.data());
 
 	imageFormat = surfaceFormat.format;
-	extent = extent;
 }
 
 VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
@@ -112,6 +112,10 @@ VkExtent2D Swapchain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilit
 
 void Swapchain::recreateSwapChain()
 {
+    std::cout << "SWAPCHAIN RECREATION\n";
+    // SWAPCHAIN RECREATION NEEDS TO INFORM IMAGE MANAGER THAT SIZES HAVE CHANGED
+    // NO CLUE HOW BUT THIS NEEDS TO HAPPEN BEFORE THIS CAN WORK AGAIN
+
 	int width = 0, height = 0;
 	//glfwGetFramebufferSize(window, &width, &height);
 	while (width == 0 || height == 0) {
@@ -124,22 +128,11 @@ void Swapchain::recreateSwapChain()
 
 	createSwapChain();
 	createImageViews();
-	createColorResources();
-	createDepthResources();
-	createFramebuffers();
+	//createFramebuffers();
 }
 
 void Swapchain::cleanupSwapChain()
 {
-	vkDestroyImageView(context->device, colorImageView, nullptr);
-	//vkDestroyImage(device, colorImage, nullptr);
-	vmaDestroyImage(context->vmaAllocator, colorImage, imageAllocation);
-	vkFreeMemory(context->device, colorImageMemory, nullptr);
-	vkDestroyImageView(context->device, depthImageView, nullptr);
-	vmaDestroyImage(context->vmaAllocator, depthImage, depthImageAllocation);
-	//vkDestroyImage(device, depthImage, nullptr);
-	vkFreeMemory(context->device, depthImageMemory, nullptr);
-
 	for (size_t i = 0; i < framebuffers.size(); i++) {
 		vkDestroyFramebuffer(context->device, framebuffers[i], nullptr);
 	}
@@ -151,31 +144,6 @@ void Swapchain::cleanupSwapChain()
 	vkDestroySwapchainKHR(context->device, swapChain, nullptr);
 }
 
-void Swapchain::createFramebuffers()
-{
-	framebuffers.resize(imageViews.size());
-
-	for (size_t i = 0; i < imageViews.size(); i++) {
-		std::array<VkImageView, 3> attachments = {
-			colorImageView,
-			depthImageView,
-			imageViews[i],
-		};
-
-		VkFramebufferCreateInfo framebufferInfo{};
-		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = renderPass;
-		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-		framebufferInfo.pAttachments = attachments.data();
-		framebufferInfo.width = extent.width;
-		framebufferInfo.height = extent.height;
-		framebufferInfo.layers = 1;
-
-		if (vkCreateFramebuffer(context->device, &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create framebuffer!");
-		}
-	}
-}
 
 void Swapchain::createImageViews()
 {
@@ -184,27 +152,6 @@ void Swapchain::createImageViews()
 	for (uint32_t i = 0; i < images.size(); i++) {
 		imageViews[i] = VulkanHelper::createImageView(context, images[i], imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 	}
-}
-
-void Swapchain::createColorResources()
-{
-	VkFormat colorFormat = imageFormat;
-
-	VulkanHelper::createImage(context, extent.width, extent.height, 1, context->msaaSamples, colorFormat,
-		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, colorImageMemory, &imageAllocation);
-	colorImageView = VulkanHelper::createImageView(context, colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
-    context->setDebugLabel(VK_OBJECT_TYPE_IMAGE, colorImage, "Color Image");
-}
-
-void Swapchain::createDepthResources()
-{
-	VkFormat depthFormat = findDepthFormat();
-	VulkanHelper::createImage(context, extent.width, extent.height, 1, context->msaaSamples, depthFormat,
-		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		depthImage, depthImageMemory, &depthImageAllocation);
-	depthImageView = VulkanHelper::createImageView(context, depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
-    context->setDebugLabel(VK_OBJECT_TYPE_IMAGE, depthImage, "Depth Image");
 }
 
 void Swapchain::createRenderPass()
@@ -230,7 +177,7 @@ void Swapchain::createRenderPass()
 	colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	VkAttachmentDescription depthAttachment{};
-	depthAttachment.format = findDepthFormat();
+	depthAttachment.format = VulkanHelper::findDepthFormat(context->physicalDevice);
 	depthAttachment.samples = context->msaaSamples;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -281,32 +228,10 @@ void Swapchain::createRenderPass()
 	}
 }
 
-VkFormat Swapchain::findDepthFormat()
-{
-	return findSupportedFormat(
-		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-}
-
 void Swapchain::cleanup()
 {
 	cleanupSwapChain();
 	vkDestroyRenderPass(context->device, renderPass, nullptr);
 }
 
-VkFormat Swapchain::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
-{
-	for (VkFormat format : candidates) {
-		VkFormatProperties props;
-		vkGetPhysicalDeviceFormatProperties(context->physicalDevice, format, &props);
-		if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
-			return format;
-		}
-		else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
-			return format;
-		}
-	}
 
-	throw std::runtime_error("failed to find supported format!");
-}
