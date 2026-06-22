@@ -1,3 +1,4 @@
+#pragma once
 #include "FrameManager.h"
 #include "GLFW/glfw3.h"
 #include "SceneLoader.h"
@@ -7,10 +8,11 @@
 #include "Camera.h"
 #include "EngineControl.h"
 #include "TextElement.h"
-#include "Light.h"
+#include "SceneState.h"
 #include <iterator>
 #include <string>
 #include <vector>
+#include <glm/gtx/rotate_vector.hpp>
 
 class RenderSystem : public ISystem{
 public:
@@ -21,17 +23,19 @@ public:
         input(&em),
         camera(&em),
         control(&em),
+        lightSources(&em),
 		window(WINDOWWIDTH, WINDOWHEIGHT),
 		context(&window),
 		swapchain(&context),
-		frameManager(&swapchain) {
+		frameManager(&swapchain),
+        sceneState(frameManager.descriptorAllocator){
 		wrimels = 0;
 	}
 
 	std::vector<ecs::EntityBuilder>* run(uint32_t dt) override {
         updateDiagnostics();
         queryInput();
-        updateCamera(dt);
+        updateScene(dt);
 		std::vector<ecs::EntityBuilder>* commands = new std::vector<ecs::EntityBuilder>;
 		window.tick();
 		assembleDrawItems();
@@ -45,17 +49,23 @@ public:
         std::vector<ecs::EntityBuilder> cmd;
         std::string robotoslab = "robotoslab";
         cmd.emplace_back(ecs::EntityBuilder(entityManager, &diagnostics).with<TextElement128>(TextElement128("text", frameManager.assetManager.loadFont(robotoslab, 30), glm::vec2(0,0), glm::vec4(1))));
-        LightSource light({0,0,0}, {1,1,1,1});
-        cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light));
+        LightSource light1({10,0,0,0}, {0,1,0,1});
+        cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light1));
+        LightSource light2({0,10,0,0}, {0,0,1,1});
+        cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light2));
+        LightSource light3({0,0,10,0}, {1,0,0,1});
+        cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light3));
         return cmd;
     }
 
+    // Maybe better to set up a queue of callback functions?
 	void updateView() override {
 		renderObjects.update();
 		textElements.update();
         input.update();
         camera.update();
         control.update();
+        lightSources.update();
 	}
 
 private:
@@ -65,11 +75,13 @@ private:
     ecs::ECSView<UserInput> input;
     ecs::ECSView<Camera> camera;
     ecs::ECSView<EngineControl> control;
+    ecs::ECSView<LightSource> lightSources;
 	AppWindow window;
 	RenderContext context;
 	Swapchain swapchain;
 public:
 	FrameManager frameManager;
+    SceneState sceneState;
 private:
     std::vector<DrawItem> drawItems;
 	int wrimels;
@@ -96,7 +108,8 @@ private:
 		const MeshResource& mesh = frameManager.assetManager.getMesh(obj.handle);
 		frameManager.objectManager.updateUniformBuffer(frameManager.currentFrame, cam.worldCameraPos, cam.cameraFront, cam.cameraUp);
 		std::vector<VkDescriptorSet> descriptors;
-		descriptors.push_back(frameManager.objectManager.globalDescriptorSets[frameManager.currentFrame]);
+		descriptors.push_back(sceneState.getDescriptor());
+        //descriptors.push_back(frameManager.objectManager.globalDescriptorSets[frameManager.currentFrame]);
 		descriptors.push_back(frameManager.assetManager.getDescriptors(mesh.texture)[frameManager.currentFrame]);
 
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), obj.viewPosition);
@@ -309,4 +322,27 @@ private:
         std::string text = "Frame " + std::to_string(frameManager.currentFrame); 
         entityManager.getComponent<TextElement128>(diagnostics).change(text);
     }
+
+    void updateScene(float dt) {
+        updateCamera(dt);
+
+        auto itCam = camera.begin();
+        auto& [cam] = *itCam;
+        sceneState.setCamera(cam.worldCameraPos, cam.cameraUp, cam.cameraFront);
+        
+        std::vector<LightSource> lights;
+        for(auto& [light] : lightSources) {
+            lights.emplace_back(light);
+        }
+
+        float angle = dt/1000;
+        lightSources.at(0).pos = glm::rotateZ(lightSources.at(0).pos, angle);
+        lightSources.at(1).pos = glm::rotateX(lightSources.at(1).pos, angle);
+        lightSources.at(2).pos = glm::rotateY(lightSources.at(2).pos, angle);
+
+        sceneState.setLights(lights.size(), &lights[0]);
+
+        sceneState.submit();
+    }
+
 };

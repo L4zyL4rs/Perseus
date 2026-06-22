@@ -42,6 +42,9 @@
 # LSP Files
 .clangd
 
+# AGENTS file
+AGENTS.md
+
 # Other folders
 .vs/
 .cache/

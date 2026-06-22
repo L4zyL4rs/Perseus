@@ -17,14 +17,11 @@ layout (location = 2) out vec4 fragNormal;
 layout (location = 3) out vec4 fragPosition;
 
 void main() {
-	// first calculate two vectors that span the triangle
+	// Span triangle from two vectors, then calculate normal of triangle
 	vec3 base1 = vertFragPosition[1].xyz - vertFragPosition[0].xyz;
 	vec3 base2 = vertFragPosition[2].xyz - vertFragPosition[0].xyz;
-
-	// Now calculate the normal vector
 	vec4 normal = vec4(normalize(cross(base1, base2)), 0);
 
-	// Emit vertices, their attributes and the normal
 	for (int i = 0; i < 3; i++) {
 		gl_Position = gl_in[i].gl_Position;
 		fragColor = vertColor[i];

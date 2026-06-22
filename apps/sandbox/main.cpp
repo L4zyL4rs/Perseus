@@ -38,9 +38,11 @@ int main() {
 
     ecs::ECSView<EngineControl> controlView(&em);
 
-	for (int i = 0; i < 10; i) {
+	for (int i = 0; i < 3; i) {
 		scheduler.run();
         controlView.update();
+
+        // Yeah maybe comment what the hell this does once I understand it again
         auto itControl = controlView.begin();
         auto& [ctrl] = *itControl;
         if(ctrl.requestExit) { break; }
@@ -57,8 +59,8 @@ std::vector<ecs::EntityBuilder> startScene(ecs::EntityManager& em, RenderSystem&
     std::string robotoslab = "robotoslab";
     std::string text = "Hello World";
     std::vector<ecs::EntityBuilder> scene;
-    scene.emplace_back(ecs::EntityBuilder(em).with<RenderObject>(RenderObject(glm::vec3(1), glm::vec3(0), rend.frameManager.assetManager.loadAsset(sphere))));
-    scene.emplace_back(ecs::EntityBuilder(em).with<RenderObject>(RenderObject(glm::vec3(-1), glm::vec3(0), rend.frameManager.assetManager.loadAsset(cube))));
+    scene.emplace_back(ecs::EntityBuilder(em).with<RenderObject>(RenderObject(glm::vec3(1,0,0), glm::vec3(0), rend.frameManager.assetManager.loadAsset(sphere))));
+    scene.emplace_back(ecs::EntityBuilder(em).with<RenderObject>(RenderObject(glm::vec3(0,-2,0), glm::vec3(0), rend.frameManager.assetManager.loadAsset(cube))));
 
     scene.emplace_back(ecs::EntityBuilder(em).with<TextElement128>(TextElement128(text, rend.frameManager.assetManager.loadFont(robotoslab, 30), glm::vec2(0.2, 0.2), glm::vec4(1))));
     scene.emplace_back(ecs::EntityBuilder(em).with<UserInput>(UserInput()));

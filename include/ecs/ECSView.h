@@ -198,7 +198,7 @@ namespace ecs {
 		}
 
 		// Not in O(1) time, but still somewhat fast
-		Iterator operator[](int idx) {
+        Iterator operator[](int idx) {
 			Iterator it = begin();
 
 			while (idx > 0) {
@@ -211,8 +211,12 @@ namespace ecs {
 					idx = 0;
 				}
 			}
-			return *it;
+			return it;
 		}
+
+        auto& at(std::size_t idx) requires (N==1) {
+            return std::get<0>(*(*this)[idx]);
+        }
 
 		template <typename U>
 		U* getPointer(ComponentType id, uint32_t entityIdx, uint32_t archetypeIdx) {
