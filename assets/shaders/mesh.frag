@@ -37,5 +37,6 @@ void main() {
         vec4 lightDirection = normalize(source.pos - fragPos);
         outColor += vec4((0.8 * dot(lightDirection.xyz, fragNormal.xyz) + 0.0) * texture(texSampler, fragTexCoord).xyz * source.col.xyz, 0.8);
     }
+    outColor.rgb = outColor.rgb * fragColor;
 }
 

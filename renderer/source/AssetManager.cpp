@@ -1,5 +1,6 @@
 #include "AssetManager.h"
 #include <array>
+#include <set>
 
 #ifndef TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -92,6 +93,16 @@ AssetManager::AssetManager(RenderContext* c, CommandPool* cP, DescriptorAllocato
 	loadAsset(sphere);
     std::string robotoslab = "robotoslab";
     loadFont(robotoslab, 30);
+
+    std::string floor = "Floor";
+    GenerateMeshInfo floorInfo;
+    floorInfo.type = GenerateMeshType::flat;
+    floorInfo.xSize = 10;
+    floorInfo.ySize = 10;
+    floorInfo.color = glm::vec3(1,1,1);
+    floorInfo.scale = 1;
+    
+    generateAsset(floor, floorInfo);
 }
 
 FontHandle AssetManager::loadFont(std::string& name, size_t fontSize)
@@ -119,18 +130,22 @@ FontHandle AssetManager::loadFont(std::string& name, size_t fontSize)
 	return handle;
 }
 
-MeshHandle AssetManager::loadAsset(std::string& name)
-{
-
+SetupAssetResult AssetManager::setupAsset(const std::string& name) {
+    SetupAssetResult result;
 	if (!meshResources.empty()) {
 		for (int i = 0; i < meshResources.size(); i++) {
 			if (meshResources[i].name == name) {
-				return i;
+                result.alreadyExists = true;
+                result.handle = i;
+				return result;
 			}
 		}
 	}
 
+    result.alreadyExists = false;
+
 	// No hot loading models for now :c
+    std::cout << "Loading " << name << "\n";
 	assert(!buffersCreated);
 
 	MeshHandle mesh = meshResources.size();
@@ -142,13 +157,41 @@ MeshHandle AssetManager::loadAsset(std::string& name)
 	textureResource.name = name;
 	meshResources.push_back(meshResource);
 	textureResources.push_back(textureResource);
+	result.handle = meshResources.size() - 1;
+    return result;
+}
 
-	loadMesh(mesh);
+MeshHandle AssetManager::generateAsset(const std::string& name, const GenerateMeshInfo info) {
+    SetupAssetResult setupResult = setupAsset(name);
+    if(setupResult.alreadyExists) {
+        return setupResult.handle;
+    }
+
+    MeshHandle mesh = setupResult.handle;
+    MeshData data = MeshGenerator::generate(info);
+    addMesh(mesh, data);
+    TextureHandle texture = meshResources[mesh].texture;
+    textureResources[texture].name = "white";
+    createTexture(texture);
+    createMaterialData(texture);
+    createTextureDescriptorSets(texture);
+    return mesh;
+}
+
+MeshHandle AssetManager::loadAsset(std::string& name) {
+    SetupAssetResult setupResult = setupAsset(name);
+    if(setupResult.alreadyExists) {
+        return setupResult.handle;
+    }
+
+    MeshHandle mesh = setupResult.handle;
+	MeshData data = loadMesh(name);
+    addMesh(mesh, data);
+    TextureHandle texture = meshResources[mesh].texture;
 	createTexture(texture);
 	createMaterialData(texture);
 	createTextureDescriptorSets(texture);
-
-	return meshResources.size() - 1;
+    return mesh;
 }
 
 const FontResource& AssetManager::getFont(FontHandle handle)
@@ -204,18 +247,26 @@ const VkBuffer& AssetManager::getVertexBuffer()
 	return vertexBuffer;
 }
 
-void AssetManager::loadMesh(MeshHandle handle)
-{
-	MeshResource& resource = meshResources[handle];
-	resource.start = indices.size();
+void AssetManager::addMesh(const MeshHandle handle, const MeshData& data) {
+    MeshResource& resource = meshResources[handle];
+    resource.start = indices.size();
+    uint32_t indexOffset = vertices.size();
+    for(auto& idx : data.indices) {
+        indices.emplace_back(idx + indexOffset);
+    }
+    resource.end = indices.size() -1;
+    vertices.append_range(data.vertices);
+}
 
+MeshData AssetManager::loadMesh(std::string& name)
+{
+    MeshData data;
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
 
-	std::cout << resource.name << "\n";
-	std::string PATH = "assets/models/" + resource.name + ".obj";
+	std::string PATH = "assets/models/" + name + ".obj";
 	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, PATH.c_str())) {
 		throw std::runtime_error(warn + err);
 	}
@@ -243,17 +294,18 @@ void AssetManager::loadMesh(MeshHandle handle)
 				1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
 			};
 
+			vertex.color = { 1.0f, 1.0f, 1.0f };
+
 			if (uniqueVertices.count(vertex) == 0) {
-				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-				vertices.push_back(vertex);
+				uniqueVertices[vertex] = static_cast<uint32_t>(data.vertices.size());
+				data.vertices.push_back(vertex);
 			}
 
-			indices.push_back(uniqueVertices[vertex]);
+			data.indices.push_back(uniqueVertices[vertex]);
 
-			vertex.color = { 1.0f, 1.0f, 1.0f };
 		}
 	}
-	resource.end = indices.size() - 1;
+    return data;
 }
 
 void AssetManager::createTexture(TextureHandle handle)
@@ -345,6 +397,7 @@ void AssetManager::createMaterialData(TextureHandle handle)
 	}
 }
 
+// Why
 void AssetManager::loadMaterialData(TextureHandle handle)
 {
 	Texture& texture = textureResources[handle];

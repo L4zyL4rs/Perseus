@@ -1,6 +1,7 @@
 #pragma once
 #include "DescriptorAllocator.h"
 #include "Bitmap.h"
+#include "MeshGenerator.h"
 #include "glm_config.h"
 
 // Pipeline, material, depth and mesh get 16 bits
@@ -9,24 +10,6 @@ using MeshHandle = uint16_t;
 using TextureHandle = uint16_t;
 using FontHandle = uint16_t;
 
-struct Vertex {
-    glm::vec3 pos{ 0.0f };
-    glm::vec3 color{ 1.0f };
-    glm::vec2 texCoord{ 0.0f };
-
-    bool operator==(const Vertex& other) const;
-    static VkVertexInputBindingDescription getBindingDescription();
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
-};
-
-namespace std {
-    template<> struct hash<Vertex> {
-		inline size_t operator()(Vertex const& vertex) const {
-			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
-		}
-    };
-};
 
 struct CharacterInfo {
     glm::vec2 uv0{};
@@ -55,6 +38,11 @@ struct Texture {
     std::vector<VkDescriptorSet> descriptors{};
 };
 
+struct SetupAssetResult {
+    MeshHandle handle;
+    bool alreadyExists;
+};
+
 // For now just indices into index buffer
 // Valid as long as one big vertex buffer is used
 // Accessing textures should be done through TextureHandles in the future to share textures across meshes
@@ -65,6 +53,7 @@ struct MeshResource {
     std::string name{};
     TextureHandle texture = UINT16_MAX;
 };
+
 
 // Struct containing only the relevant rendering information for one character
 // Gets fed into vertex shader
@@ -108,6 +97,7 @@ public:
     // LOADED MODELS WILL NOT BE RENDERABLE UNTIL createBuffers() IS CALLED
     // Assets should later be some .yaml file that contains all texture, mesh and material data
 	MeshHandle loadAsset(std::string& name);
+    MeshHandle generateAsset(const std::string& name, const GenerateMeshInfo info);
 
     const FontResource& getFont(FontHandle handle);
 
@@ -138,7 +128,9 @@ private:
     VkSampler fontSampler{};
     bool buffersCreated = false;
 
-    void loadMesh(MeshHandle handle);
+    SetupAssetResult setupAsset(const std::string& name);
+    void addMesh(const MeshHandle handle, const MeshData& data);
+    MeshData loadMesh(std::string& name);
     void createTexture(TextureHandle handle);
     void createTextureImage(TextureHandle handle);
     void createTextureImageView(TextureHandle handle);

@@ -1,6 +1,7 @@
 #pragma once
 #include "FrameManager.h"
 #include "GLFW/glfw3.h"
+#include "MeshGenerator.h"
 #include "SceneLoader.h"
 #include "ECSView.h"
 #include "systemBase.h"
@@ -55,6 +56,7 @@ public:
         cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light2));
         LightSource light3({0,0,10,0}, {1,0,0,1});
         cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light3));
+
         return cmd;
     }
 
@@ -89,11 +91,11 @@ private:
 
 	void assembleDrawItems() {
 		drawItems.clear();
-        assembleObjDrawItem(entityManager.getComponent<RenderObject>(0));
-        assembleObjDrawItem(entityManager.getComponent<RenderObject>(1));
-		//for (auto& [obj] : renderObjects) {
-		//	assembleObjDrawItem(obj);
-		//}
+        //assembleObjDrawItem(entityManager.getComponent<RenderObject>(0));
+        //assembleObjDrawItem(entityManager.getComponent<RenderObject>(1));
+		for (auto& [obj] : renderObjects) {
+		    assembleObjDrawItem(obj);
+		}
 
 		assembleTextDrawItems();
 	}
