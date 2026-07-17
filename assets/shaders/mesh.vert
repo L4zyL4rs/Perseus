@@ -10,6 +10,8 @@ layout(binding = 0) uniform GlobalUniformBufferObject {
     vec4 pos;
     vec4 up;
     vec4 front;
+    mat4 view;
+    mat4 proj;
     ivec4 lightCount; 
     LightSource lightSources[10];
 } uboGlobal;
@@ -28,8 +30,8 @@ layout(location = 2) out vec4 fragPosition;
 
 void main() {
     fragPosition = vec4(inPosition, 1.0f);
-    //gl_Position = uboGlobal.proj * uboGlobal.view * fragPosition;
-    gl_Position = pushConstant.transform * vec4(inPosition, 1.0f);
+    gl_Position = uboGlobal.proj * uboGlobal.view * pushConstant.transform * fragPosition;
+    //gl_Position = pushConstant.transform * vec4(inPosition, 1.0f);
     fragColor = inColor;
     fragTexCoord = inTexCoord;
 }

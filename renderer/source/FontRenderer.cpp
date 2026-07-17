@@ -59,9 +59,9 @@ const std::vector<DrawItem> FontRenderer::assembleDrawItems(std::unordered_map<F
         drawItem.pipeline = PipelineType::Text;
         drawItem.sortKey = 0;
        
-        std::cout << drawItem;
+        //std::cout << drawItem;
         drawItems2.push_back(drawItem);
-        std::cout << "Text Buffer has size " << textBuffer.size() << "\n";
+        //std::cout << "Text Buffer has size " << textBuffer.size() << "\n";
     }
 
     // Beware that characterBufferSize might not be big enough!
@@ -70,7 +70,7 @@ const std::vector<DrawItem> FontRenderer::assembleDrawItems(std::unordered_map<F
     memcpy(pStagingBuffer, textBuffer.data(), textBuffer.size() * sizeof(CharacterCoordinates));
     VulkanHelper::copyBuffer(context, commandPool->get(), stagingBuffer, characterBuffer, characterBufferSize);
 
-    std::cout << "Returning " << drawItems2.size() << " items from font manager\n";
+    //std::cout << "Returning " << drawItems2.size() << " items from font manager\n";
     return drawItems2;
 }
 

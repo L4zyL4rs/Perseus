@@ -1,3 +1,4 @@
+#pragma once
 #include "DrawItemAssembler.h"
 #include "ImageManager.h"
 #include <vulkan/vulkan_core.h>
@@ -6,7 +7,7 @@ class IRenderPass {
 public:
     virtual ~IRenderPass() = default;
 
-    virtual void addDrawItem(const DrawItem& item) = 0;
+    virtual void setDrawItems(std::vector<DrawItem>* newItems) = 0;
 
     virtual void prepare() = 0;
 
@@ -34,4 +35,4 @@ public:
         }
     }
 };
-
+ 

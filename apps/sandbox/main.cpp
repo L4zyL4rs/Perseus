@@ -16,7 +16,7 @@ int main() {
 	Scheduler scheduler = Scheduler(em);
 	//EntityMover mover = EntityMover(em);
 	//EntityPrinter printer = EntityPrinter(em);
-	RenderSystem renderer = RenderSystem(em, 1600, 1200);
+	RenderSystem renderer = RenderSystem(em, 1600, 1200, 45);
 
 	//scheduler.addSystem(&mover);
 	//scheduler.addSystem(&printer);

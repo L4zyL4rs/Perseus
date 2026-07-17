@@ -14,12 +14,13 @@ struct PipelineBundle {
 enum class PipelineType {
 	None,
 	Mesh,
-	Text
+	Text,
+  Skybox
 };
 
 // Define array to be able to iterate over all PipelineTypes
 // Weird way to do this if there are more PipelineTypes
-static const PipelineType allPipelineTypes[] = { PipelineType::Mesh, PipelineType::Text};
+static const PipelineType allPipelineTypes[] = { PipelineType::Mesh, PipelineType::Text, PipelineType::Skybox};
 
 // Define hash function for unordered_map of pipelines
 template <>

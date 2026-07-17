@@ -30,8 +30,8 @@ ImageHandle ImageManager::allocate(ImageUsageType usage, std::string debugLabel)
 
     switch(usage) {
         case ImageUsageType::ColorImage:
-            usageBits = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
-                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            usageBits = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+                    VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
             aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             break;
         case ImageUsageType::DepthImage:
@@ -157,7 +157,7 @@ void ImageManager::sync(VkCommandBuffer commandBuffer, ImageHandle handle, VkPip
         .srcAccessMask = images[handle].sync.access,
         .dstStageMask = stage,
         .dstAccessMask = access,
-        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .oldLayout = images[handle].sync.layout,
         .newLayout = VK_IMAGE_LAYOUT_GENERAL,
         .image = images[handle].image,
         .subresourceRange = images[handle].subresource
@@ -173,6 +173,7 @@ void ImageManager::sync(VkCommandBuffer commandBuffer, ImageHandle handle, VkPip
 
     images[handle].sync.stage = stage;
     images[handle].sync.access = access;
+    images[handle].sync.layout = VK_IMAGE_LAYOUT_GENERAL;
 }
 
 void ImageManager::recreateSwapchain() {
@@ -186,7 +187,6 @@ void ImageManager::recreateSwapchain() {
 void ImageManager::recreateImage(ImageHandle handle) {
     ImageAllocInfo allocInfo = images[handle].allocInfo;
     allocInfo.extent = swapExtent;
-    std::cout << "Fortnite " << allocInfo.extent.width << "\n";
 
     free(handle);
     ImageHandle tempHandle = allocate(allocInfo);

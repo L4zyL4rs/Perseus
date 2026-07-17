@@ -10,6 +10,8 @@ layout(binding = 0) uniform GlobalUniformBufferObject {
     vec4 pos;
     vec4 up;
     vec4 front;
+    mat4 view;
+    mat4 proj;
     ivec4 lightCount; 
     LightSource lightSources[10];
 } uboGlobal;
@@ -35,7 +37,7 @@ void main() {
         LightSource source = uboGlobal.lightSources[i];
 
         vec4 lightDirection = normalize(source.pos - fragPos);
-        outColor += vec4((0.8 * dot(lightDirection.xyz, fragNormal.xyz) + 0.0) * texture(texSampler, fragTexCoord).xyz * source.col.xyz, 0.8);
+        outColor += vec4((0.8 * dot(lightDirection.xyz, fragNormal.xyz) + 0.0) * texture(texSampler, fragTexCoord).xyz * source.col.rgb * source.col.a, 0.8);
     }
     outColor.rgb = outColor.rgb * fragColor;
 }

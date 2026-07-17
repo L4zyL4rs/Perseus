@@ -34,7 +34,7 @@ void Swapchain::createSwapChain()
 	createInfo.imageColorSpace = surfaceFormat.colorSpace;
 	createInfo.imageExtent = extent;
 	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 	QueueFamilyIndices indices = context->findQueueFamilies(context->physicalDevice);
 	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -164,7 +164,7 @@ void Swapchain::createRenderPass()
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 	VkAttachmentDescription colorAttachmentResolve{};
 	colorAttachmentResolve.format = imageFormat;
@@ -188,7 +188,7 @@ void Swapchain::createRenderPass()
 
 	VkAttachmentReference colorAttachmentRef{};
 	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_GENERAL;
 
 	VkAttachmentReference depthAttachmentRef{};
 	depthAttachmentRef.attachment = 1;
@@ -196,7 +196,7 @@ void Swapchain::createRenderPass()
 
 	VkAttachmentReference colorAttachmentResolveRef{};
 	colorAttachmentResolveRef.attachment = 2;
-	colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_GENERAL;
 
 	VkSubpassDescription subpass{};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -233,5 +233,4 @@ void Swapchain::cleanup()
 	cleanupSwapChain();
 	vkDestroyRenderPass(context->device, renderPass, nullptr);
 }
-
 

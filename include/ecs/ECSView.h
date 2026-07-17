@@ -332,9 +332,9 @@ namespace ecs {
 			void update(const std::vector<Archetype*>* archetypes) {
 				sizes.resize(archetypes->size());
 				for (int i = 0; i < sizes.size(); i++) {
-					std::cout << "Size of sizes " << sizes.size() << "\n";
+					//std::cout << "Size of sizes " << sizes.size() << "\n";
 					sizes[i] = (*archetypes)[i]->storageQueue.highestID;
-					std::cout << "Registered size of " << sizes[i] << "\n";
+					//std::cout << "Registered size of " << sizes[i] << "\n";
 				}
 			}
 		}; 

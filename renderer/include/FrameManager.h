@@ -1,8 +1,10 @@
 #pragma once
+#include "FrameRenderInfo.h"
 #include "renderObject.h"
 #include "FontRenderer.h"
 #include "ImageManager.h"
 #include "MeshPass.h"
+#include "SkyPass.h"
 
 extern uint32_t MAX_OBJECTS;
 
@@ -20,6 +22,7 @@ public:
     FontRenderer fontRenderer;
     ImageManager& imageManager;
     MeshPass meshPass;
+    SkyPass skyPass;
     std::vector<VkCommandBuffer> commandBuffers{};
     std::vector<VkSemaphore> imageAvailableSemaphores{};
     std::vector<VkSemaphore> renderFinishedSemaphores{};
@@ -31,8 +34,8 @@ public:
     FrameManager(Swapchain* s);
     void cleanup();
     void createCommandBuffers();
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::vector<DrawItem>& drawItems);
-    void draw(std::vector<DrawItem>& drawItems);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void draw(FrameRenderInfo& renderInfo);
     void createSyncObjects();
     // Insane naming
     void drawDrawItems(const std::vector<DrawItem>& items, VkCommandBuffer commandBuffer, uint32_t currentFrame);
@@ -40,5 +43,7 @@ private:
     void transitionLayoutPresent(uint32_t imageIndex);
     void transitionLayoutRender(uint32_t imageIndex);
     void resolve(VkCommandBuffer cmd, uint32_t imageIndex);
+    void setupSkypassPipeline();
     void recreateSwapchain();
+    void setupRenderpasses();
 };

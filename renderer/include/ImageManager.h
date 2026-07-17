@@ -10,7 +10,7 @@ using ImageHandle = uint32_t;
 struct ImageSyncInfo {
     VkPipelineStageFlags2 stage;
     VkAccessFlags2 access;
-    VkImageLayout layout;
+    VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 };
 
 struct ImageAllocInfo {

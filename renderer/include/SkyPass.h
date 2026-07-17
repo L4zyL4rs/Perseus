@@ -5,11 +5,19 @@
 #include <iterator>
 #include <vulkan/vulkan_core.h>
 
+struct SkyPassPushConstant {
+  glm::vec4 sunPos;
+  glm::vec4 camForward;
+  glm::vec4 camUp;
+  glm::vec4 FOV;   // Horizontal and vertical FOV
+};
+
 class SkyPass : public IRenderPass {
 public:
   ImageManager& manager;
   ImageHandle colorHandle;
   DrawItem item;
+  SkyPassPushConstant skyInfo;
 
   SkyPass(ImageManager& imageManager) : manager(imageManager) {}
 
@@ -17,7 +25,22 @@ public:
     colorHandle = color;
   }
 
-  void addDrawItem(const DrawItem& skyInfo) override { item = skyInfo; }
+  void setCamera(glm::vec3 forward, glm::vec3 up, float verticalFOV, float horizontalFOV) {
+    skyInfo.camForward.x = forward.x;
+    skyInfo.camForward.y = forward.y;
+    skyInfo.camForward.z = forward.z;
+    skyInfo.camUp.x = up.x;
+    skyInfo.camUp.y = up.y;
+    skyInfo.camUp.z = up.z;
+    skyInfo.FOV.x = horizontalFOV;
+    skyInfo.FOV.y = verticalFOV;
+  }
+
+  void setSunPosition(glm::vec4 pos) {
+    skyInfo.sunPos = pos;
+  }
+
+  void setDrawItems(std::vector<DrawItem>* newItems) override {}
 
   void prepare() override {}
 
@@ -25,17 +48,23 @@ public:
     return manager.getImg(colorHandle);
   }
 
+  void draw(VkCommandBuffer cmd, PipelineManager& pipelineManager) {
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager.pipeline(PipelineType::Skybox));
+    vkCmdPushConstants(cmd, pipelineManager.getPipelineLayout(PipelineType::Skybox), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SkyPassPushConstant), &skyInfo);
+    vkCmdDraw(cmd, 3, 1, 0, 0);
+  }
+
   void execute(VkCommandBuffer cmd, PipelineManager& pipelineManager) override {
     beginRendering(cmd);
     setViewportScissors(cmd);
-    //drawDrawItems(cmd);
+    draw(cmd, pipelineManager);
     vkCmdEndRendering(cmd);
   }
 
   void beginRendering(VkCommandBuffer cmd) {
     manager.sync(cmd, colorHandle,
                  VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-                 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                 VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
 
     VkRenderingAttachmentInfo colorAttachmentInfo{};
     colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;

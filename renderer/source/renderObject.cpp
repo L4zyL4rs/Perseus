@@ -30,11 +30,10 @@ void ObjectManager::createMeshGraphicsPipeline() {
     meshTemplate.addDescriptor(descriptorAllocator->layouts.camera);
     meshTemplate.addDescriptor(descriptorAllocator->layouts.meshAndSampler);
     meshTemplate.setVertexFormat(Vertex::getBindingDescription(), Vertex::getAttributeDescriptions());
-    meshTemplate.enablePushConstants(sizeof(MeshPushConstant));
+    meshTemplate.enablePushConstants(sizeof(MeshPushConstant), VK_SHADER_STAGE_VERTEX_BIT);
     VkFormat formats[1] = {swapchain->imageFormat};
     meshTemplate.setAttachmentFormats(1, formats, VulkanHelper::findDepthFormat(context->physicalDevice), VulkanHelper::findDepthFormat(context->physicalDevice));
     meshTemplate.setPipelineDebugLabel("Opaque Pipeline");
-
     meshTemplate.build();
 }
 

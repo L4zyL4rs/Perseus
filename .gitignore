@@ -41,6 +41,8 @@
 
 # LSP Files
 .clangd
+.clang-tidy
+.clang-format
 
 # AGENTS file
 AGENTS.md

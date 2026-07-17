@@ -18,17 +18,6 @@ file(DOWNLOAD
 https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image.h
 ${CMAKE_CURRENT_SOURCE_DIR}/external/stb_image.h)
 
-file(COPY
-    ${CMAKE_SOURCE_DIR}/assets
-    DESTINATION ${CMAKE_BINARY_DIR}
-)
-
-file(MAKE_DIRECTORY ${FONT_DIR})
-set(FONT_DIR ${CMAKE_BINARY_DIR}/assets/fonts)
-
-file(DOWNLOAD 
-https://github.com/google/fonts/raw/892dc85555606db5a08545c7874a4dc561d3ce50/apache/robotoslab/RobotoSlab%5Bwght%5D.ttf
-${FONT_DIR}/robotoslab.ttf)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
