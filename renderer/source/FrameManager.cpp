@@ -98,7 +98,7 @@ void FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
 void FrameManager::draw(FrameRenderInfo& renderInfo) {
   meshPass.setDrawItems(&renderInfo.meshItems);
   skyPass.setCamera(renderInfo.camForward, renderInfo.camUp, renderInfo.verticalFOV, renderInfo.horizontalFOV);
-  skyPass.setSunPosition(glm::vec4(1, 0, 0, 0));
+  skyPass.setSunPosition(glm::normalize(glm::vec4(0, 0.3, 0.7, 0)));
 
   //std::cout << "Found extent of " << swapchain->extent.height << " x "
   //          << swapchain->extent.width << "\n";
