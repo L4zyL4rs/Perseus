@@ -23,7 +23,9 @@ FrameManager::FrameManager(Swapchain *s)
                    &assetManager, &commandPool),
       imageManager(swapchain->imageManager),
       meshPass(imageManager),
-      skyPass(imageManager)
+      skyPass(imageManager),
+      shadowPass(imageManager),
+      sceneState(descriptorAllocator)
 
 {
   createCommandBuffers();
@@ -96,9 +98,7 @@ void FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
 }
 
 void FrameManager::draw(FrameRenderInfo& renderInfo) {
-  meshPass.setDrawItems(&renderInfo.meshItems);
-  skyPass.setCamera(renderInfo.camForward, renderInfo.camUp, renderInfo.verticalFOV, renderInfo.horizontalFOV);
-  skyPass.setSunPosition(glm::normalize(glm::vec4(0, 0.3, 0.7, 0)));
+  //meshPass.setDrawItems(&renderInfo.meshItems);
 
   //std::cout << "Found extent of " << swapchain->extent.height << " x "
   //          << swapchain->extent.width << "\n";
@@ -119,6 +119,15 @@ void FrameManager::draw(FrameRenderInfo& renderInfo) {
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     throw std::runtime_error("failed to acquire swap chain image!");
   }
+
+  sceneState.setCamera(renderInfo.camPos, renderInfo.camUp, renderInfo.camForward);
+  sceneState.setView(renderInfo.viewMatrix);
+  sceneState.setProj(renderInfo.projMatrix);
+  sceneState.setLights(static_cast<uint32_t>(renderInfo.lights.size()), renderInfo.lights.data());
+  sceneState.submit(currentFrame);
+  assembleDrawItems(renderInfo);
+  skyPass.setCamera(renderInfo.camForward, renderInfo.camUp, renderInfo.verticalFOV, renderInfo.horizontalFOV);
+  skyPass.setSunPosition(glm::normalize(glm::vec4(0, 0.3, 0.7, 0)));
 
   vkResetFences(context->device, 1, &inFlightFences[currentFrame]);
   vkResetCommandBuffer(commandBuffers[currentFrame], 0);
@@ -232,6 +241,43 @@ void FrameManager::drawDrawItems(const std::vector<DrawItem> &items,
     }
   }
 }
+
+void FrameManager::assembleDrawItems(FrameRenderInfo& renderInfo) {
+  drawItems.clear();
+  meshPass.clearDrawItems();
+  shadowPass.clearDrawItems();
+  DrawItem item;
+  const VkBuffer &vertexBuffer = assetManager.getVertexBuffer();
+  const VkBuffer &indexBuffer = assetManager.getIndexBuffer();
+
+  std::vector<VkDescriptorSet> descriptors(2);
+  for(auto& obj : renderInfo.meshes) {
+    const MeshResource &mesh = assetManager.getMesh(obj.mesh);
+    descriptors[0] = sceneState.getDescriptor(currentFrame);
+    descriptors[1] = assetManager.getDescriptors(mesh.texture)[currentFrame];
+    
+    item.descriptorSets = descriptors;
+    item.transform = obj.transform;
+    item.indexBuffer = indexBuffer;
+    item.meshBuffer = vertexBuffer;
+    item.meshStartIndex = mesh.start;
+    item.meshStopIndex = mesh.end;
+    item.sortKey = 0;
+
+    if(obj.flags.castsShadow) {
+      item.pipeline = PipelineType::Depth;
+      shadowPass.addDrawItem(item);
+    }
+    
+    item.pipeline = PipelineType::Mesh;
+    meshPass.addDrawItem(item);
+  }
+
+  drawItems.append_range(fontRenderer.assembleDrawItems(renderInfo.texts, currentFrame));
+}
+
+
+// EVERYTHING BELOW IS FRAMEGRAPH LOGIC AND SHOULD BE ITS OWN CLASS ONE DAY
 
 void FrameManager::transitionLayoutPresent(uint32_t imageIndex) {
   VkImageMemoryBarrier barrier{};
@@ -383,6 +429,8 @@ void FrameManager::recreateSwapchain() {
   imageManager.recreateSwapchain();
 }
 
+// In the far future: Create pipelines by PipelineKey
+
 void FrameManager::setupSkypassPipeline() {
   PipelineBuilder builder;
   builder.setDefaults(&pipelineManager, PipelineType::Skybox);
@@ -398,10 +446,28 @@ void FrameManager::setupSkypassPipeline() {
   builder.build();
 }
 
+void FrameManager::setupShadowpassPipeline() {
+  PipelineBuilder builder;
+  builder.setDefaults(&pipelineManager, PipelineType::Depth);
+  builder.setPipelineDebugLabel("Depth Pipeline");
+  builder.addVertShader("assets/shaders/meshVert.spv");
+  builder.enablePushConstants(sizeof(MeshPushConstant), VK_SHADER_STAGE_VERTEX_BIT);
+  builder.addDescriptor(descriptorAllocator.layouts.camera);
+  builder.addDescriptor(descriptorAllocator.layouts.meshAndSampler);
+  builder.setVertexFormat(Vertex::getBindingDescription(), Vertex::getAttributeDescriptions());
+  builder.enableDepthWrite();
+  builder.setAttachmentFormats(0, nullptr, VK_FORMAT_UNDEFINED, VulkanHelper::findDepthFormat(context->physicalDevice));
+  builder.build();
+}
+
+
+
 void FrameManager::setupRenderpasses() {
   ImageHandle color = imageManager.allocate(ImageUsageType::ColorImage, "Color image");
   ImageHandle depth = imageManager.allocate(ImageUsageType::DepthImage, "Depth image");
+  ImageHandle shadow = imageManager.allocate(ImageUsageType::DepthImage, "Depth image");
   setupSkypassPipeline();
   skyPass.setAttachments(color);
+  shadowPass.setAttachments(shadow);
   meshPass.setAttachments(color, depth);
 }

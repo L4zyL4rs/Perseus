@@ -30,7 +30,6 @@ public:
         context(&window),
         swapchain(&context),
         frameManager(&swapchain),
-        sceneState(frameManager.descriptorAllocator),
         verticalFOV(vertFOV) {
     wrimels = 0;
   }
@@ -42,7 +41,7 @@ public:
     std::vector<ecs::EntityBuilder> *commands =
         new std::vector<ecs::EntityBuilder>;
     window.tick();
-    assembleDrawItems();
+    gatherFrameRenderInfo();
     frameManager.draw(renderInfo);
 
     return commands;
@@ -93,7 +92,6 @@ private:
 
 public:
   FrameManager frameManager;
-  SceneState sceneState;
   float verticalFOV;
 
 private:
@@ -101,67 +99,74 @@ private:
   ecs::Entity diagnostics;
   FrameRenderInfo renderInfo;
 
-  void assembleDrawItems() {
-    renderInfo.meshItems.clear();
-    for (auto [obj] : renderObjects) {
-      assembleObjDrawItem(obj);
+  void gatherFrameRenderInfo() {
+    gatherCameraData();
+    gatherLights();
+    gatherRenderInstances();
+    gatherLights();
+  }
+
+  void gatherRenderInstances() {
+    renderInfo.meshes.clear();
+    for(auto& [object] : renderObjects) {
+      RenderInstance instance;
+      instance.mesh = object.handle;
+      instance.transform = glm::translate(glm::mat4(1.0f), object.viewPosition);
+      instance.flags.castsShadow = true;
+      renderInfo.meshes.push_back(instance);
     }
-
-    assembleTextDrawItems();
   }
 
-  void assembleObjDrawItem(RenderObject &obj) {
-    auto itCam = camera.begin();
-    auto &[cam] = *itCam;
-    // Asset Manager should not be buried inside of renderer, fine for now
-    const VkBuffer &vertexBuffer = frameManager.assetManager.getVertexBuffer();
-    const VkBuffer &indexBuffer = frameManager.assetManager.getIndexBuffer();
+  void gatherCameraData() {
+    auto& [cam] = *camera.begin();
 
-    const MeshResource &mesh = frameManager.assetManager.getMesh(obj.handle);
-    frameManager.objectManager.updateUniformBuffer(
-        frameManager.currentFrame, cam.worldCameraPos, cam.cameraFront,
-        cam.cameraUp);
-    std::vector<VkDescriptorSet> descriptors;
-    descriptors.push_back(sceneState.getDescriptor());
-    // descriptors.push_back(frameManager.objectManager.globalDescriptorSets[frameManager.currentFrame]);
-    descriptors.push_back(frameManager.assetManager.getDescriptors(
-        mesh.texture)[frameManager.currentFrame]);
+    renderInfo.camPos = cam.worldCameraPos;
+    renderInfo.camForward = cam.cameraFront;
+    renderInfo.camUp = cam.cameraUp;
+    renderInfo.verticalFOV = cam.verticalFOV;
 
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), obj.viewPosition);
+    renderInfo.windowWidth = window.WINDOWWIDTH;
+    renderInfo.windowHeight = window.WINDOWHEIGHT;
 
-    DrawItem item;
-    item.descriptorSets = descriptors;
-    item.transform = model;
-    item.indexBuffer = indexBuffer;
-    item.meshBuffer = vertexBuffer;
-    item.meshStartIndex = mesh.start;
-    item.meshStopIndex = mesh.end;
-    item.pipeline = PipelineType::Mesh;
-    item.sortKey = 0;
+    renderInfo.viewMatrix = glm::lookAt(cam.worldCameraPos,
+                            cam.worldCameraPos + cam.cameraFront,
+                            cam.cameraUp);
 
-    // std::cout << "View position: \n" << object.viewPosition;
-    // std::cout << "Push constant: \n" << item.transform;
-    renderInfo.meshItems.push_back(item);
+    float aspect = static_cast<float>(window.WINDOWWIDTH) /
+                   static_cast<float>(window.WINDOWHEIGHT);
+
+    renderInfo.projMatrix = glm::perspective(glm::radians(cam.verticalFOV), aspect, 0.1f, 100.0f);
+
+    renderInfo.projMatrix[1][1] *= -1.0f;
+
+    float verticalRadians = glm::radians(cam.verticalFOV);
+    float horizontalRadians = 2.0f * std::atan(std::tan(verticalRadians * 0.5f) * aspect);
+
+    renderInfo.horizontalFOV = glm::degrees(horizontalRadians);
+}
+
+  void gatherLights() {
+    renderInfo.lights.clear();
+    for(auto& [light] : lightSources) {
+      renderInfo.lights.emplace_back(light);
+    }
   }
-
   // Maybe create renderSystem-local TextElement and not upload to ECS
   // Force upload of valid drawItems into renderer, see if other ECS values also
   // get overwritten
-  void assembleTextDrawItems() {
-    std::unordered_map<FontHandle, std::vector<CharacterCoordinates>> texts;
-    // std::vector<CharacterCoordinates> textBuffer;
-
+  void gatherTextElements() {
+    renderInfo.texts.clear();
     for (const auto &[element] : textElements) {
       // const FontResource& resource =
       // frameManager.assetManager.getFont(element.handle);
-      texts[element.handle].append_range(toCharacterCooordinates(element));
+      renderInfo.texts[element.handle].append_range(toCharacterCooordinates(element));
       //std::cout << "Character coordinates count is "
       //          << texts[element.handle].size() << "\n";
       //std::cout << "Text is now " << element.text << "\n";
     }
 
-    renderInfo.meshItems.append_range(frameManager.fontRenderer.assembleDrawItems(
-        texts, frameManager.currentFrame));
+    //renderInfo.meshItems.append_range(frameManager.fontRenderer.assembleDrawItems(
+    //    texts, frameManager.currentFrame));
     //for (const auto [element] : textElements) {
       //std::cout << "Text is " << element.text << "\n";
     //}
@@ -236,7 +241,7 @@ private:
       coords.push_back({uv2, bottomLeft, color});
       coords.push_back({uv3, bottomRight, color});
 
-      // Trs2
+      // Triangle 2
       coords.push_back({uv0, topLeft, color});
       coords.push_back({uv3, bottomRight, color});
       coords.push_back({uv1, topRight, color});
@@ -357,17 +362,9 @@ private:
 
     cam.cameraFront = glm::normalize(direction);
 
-    renderInfo.camPos = cam.worldCameraPos;
-    renderInfo.camForward = cam.cameraFront;
-    renderInfo.camUp = cam.cameraUp;
-    renderInfo.verticalFOV = cam.verticalFOV;
-    renderInfo.windowHeight = window.WINDOWHEIGHT;
-    renderInfo.windowWidth = window.WINDOWWIDTH;
-
     float v = glm::radians(cam.verticalFOV);
     float aspect = window.WINDOWWIDTH / float(window.WINDOWHEIGHT);
     float h = 2.0f * atan(tan(v * 0.5f) * aspect);
-    renderInfo.horizontalFOV = glm::degrees(h);
   }
 
   void updateDiagnostics() {
@@ -396,26 +393,11 @@ private:
   void updateScene(float dt) {
     updateCamera(dt);
 
-    auto itCam = camera.begin();
-    auto &[cam] = *itCam;
-    sceneState.setCamera(cam.worldCameraPos, cam.cameraUp, cam.cameraFront);
-
-    std::vector<LightSource> lights;
-    for (auto &[light] : lightSources) {
-      lights.emplace_back(light);
-    }
-
     float angle = dt / 1000;
     lightSources.at(0).pos = glm::rotateZ(lightSources.at(0).pos, angle);
     lightSources.at(1).pos = glm::rotateX(lightSources.at(1).pos, angle);
     lightSources.at(2).pos = glm::rotateY(lightSources.at(2).pos, angle);
 
-    sceneState.setLights(lights.size(), &lights[0]);
-
-    sceneState.setView(calculateViewMatrix());
-    sceneState.setProj(calculateProjMatrix());
-
-    sceneState.submit();
   }
 
 };

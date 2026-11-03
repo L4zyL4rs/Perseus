@@ -77,6 +77,11 @@ void PipelineBuilder::setDefaults(PipelineManager *m, PipelineType t) {
   dynamicStateInfo.dynamicStateCount =
       static_cast<uint32_t>(dynamicStates.size());
   dynamicStateInfo.pDynamicStates = dynamicStates.data();
+
+  colorBlending.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  colorBlending.attachmentCount = 1;
+  colorBlending.pAttachments = &colorBlendAttachment;
 }
 
 void PipelineBuilder::setBlendModeAlpha() {
@@ -107,7 +112,8 @@ void PipelineBuilder::disableDepthTest() {
   depthStencil.depthTestEnable = false;
 }
 
-void PipelineBuilder::enablePushConstants(size_t size, VkShaderStageFlags stageFlag) {
+void PipelineBuilder::enablePushConstants(size_t size,
+                                          VkShaderStageFlags stageFlag) {
   pushConstant.offset = 0;
   pushConstant.size = size;
   pushConstant.stageFlags = stageFlag;
@@ -192,7 +198,8 @@ void PipelineBuilder::setVertexFormat(
 }
 
 void PipelineBuilder::setNoVertexInput() {
-  vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  vertexInputInfo.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertexInputInfo.vertexAttributeDescriptionCount = 0;
   vertexInputInfo.pVertexAttributeDescriptions = nullptr;
   vertexInputInfo.vertexBindingDescriptionCount = 0;
@@ -223,6 +230,10 @@ void PipelineBuilder::setAttachmentFormats(uint32_t attachmentCount,
   renderingInfo.pColorAttachmentFormats = colorFormats;
   renderingInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED; // stencilFormat;
   renderingInfo.depthAttachmentFormat = depthFormat;
+
+  colorBlending.attachmentCount =
+      attachmentCount; // MUST be set as same per
+                       // VUID-VkGraphicsPipelineCreateInfo-renderPass-07609
 }
 
 void PipelineBuilder::build() {
@@ -240,12 +251,6 @@ void PipelineBuilder::build() {
                              &bundle.layout) != VK_SUCCESS) {
     throw std::runtime_error("failed to create pipeline layout!");
   }
-
-  VkPipelineColorBlendStateCreateInfo colorBlending{};
-  colorBlending.sType =
-      VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-  colorBlending.attachmentCount = 1;
-  colorBlending.pAttachments = &colorBlendAttachment;
 
   VkGraphicsPipelineCreateInfo pipelineInfo{};
   pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

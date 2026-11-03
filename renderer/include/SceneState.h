@@ -1,3 +1,4 @@
+#pragma once
 #include "DescriptorAllocator.h"
 #include "Light.h"
 #include <vulkan/vulkan_core.h>
@@ -9,7 +10,7 @@ struct SceneStateUBO {
   glm::mat4 viewMatrix{};
   glm::mat4 projMatrix{};
 
-  glm::ivec4 lightCount;
+  glm::ivec4 lightCount{};
   LightSource lights[10]{};
 };
 
@@ -23,7 +24,6 @@ class SceneState {
   std::vector<void *> buffersMapped{};
   DescriptorAllocator &descriptorAllocator;
   uint32_t &MAX_FRAMES_IN_FLIGHT;
-  uint32_t currentFrame{};
 
 public:
   SceneState(DescriptorAllocator &da)
@@ -40,6 +40,7 @@ public:
   }
 
   void setLights(uint32_t count, LightSource *lights) {
+    if(count == 0) { return; }
     ubo.lightCount.x = count;
     memcpy(ubo.lights, lights, count * sizeof(LightSource));
   }
@@ -47,9 +48,8 @@ public:
   void setView(glm::mat4 viewMatrix) { ubo.viewMatrix = viewMatrix; }
   void setProj(glm::mat4 projMatrix) { ubo.projMatrix = projMatrix; }
 
-  void submit() {
-    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-    memcpy(buffersMapped[currentFrame], &ubo, sizeof(SceneStateUBO));
+  void submit(uint32_t frame) {
+    memcpy(buffersMapped[frame], &ubo, sizeof(SceneStateUBO));
   }
 
   void createBuffers() {
@@ -100,5 +100,5 @@ public:
     }
   }
 
-  VkDescriptorSet getDescriptor() { return descriptors[currentFrame]; }
+  VkDescriptorSet getDescriptor(uint32_t frame) { return descriptors[frame]; }
 };

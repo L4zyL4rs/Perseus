@@ -40,7 +40,7 @@ public:
     skyInfo.sunPos = pos;
   }
 
-  void setDrawItems(std::vector<DrawItem>* newItems) override {}
+  void setDrawItems(std::vector<DrawItem> newItems) override {}
 
   void prepare() override {}
 
@@ -57,6 +57,7 @@ public:
   void execute(VkCommandBuffer cmd, PipelineManager& pipelineManager) override {
     beginRendering(cmd);
     setViewportScissors(cmd);
+    bindPipeline(cmd, pipelineManager);
     draw(cmd, pipelineManager);
     vkCmdEndRendering(cmd);
   }
@@ -100,6 +101,11 @@ public:
     scissor.offset = {0, 0};
     scissor.extent = manager.swapExtent;
     vkCmdSetScissor(cmd, 0, 1, &scissor);
+  }
+
+  void bindPipeline(VkCommandBuffer cmd, PipelineManager& pipelineManager) {
+      vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        pipelineManager.pipeline(PipelineType::Skybox));
   }
 };
 

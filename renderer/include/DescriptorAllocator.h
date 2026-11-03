@@ -5,6 +5,7 @@ struct DescriptorSetLayouts {
     VkDescriptorSetLayout camera{};
     VkDescriptorSetLayout meshAndSampler{};
     VkDescriptorSetLayout fontSampler{};
+    VkDescriptorSetLayout shadows{};
 };
 
 class DescriptorAllocator {
@@ -24,6 +25,8 @@ private:
     void createCameraDescriptorSetLayout();
     void createMeshAndSamplerDescriptorSetLayout();
     void createFontDescriptorSetLayout();
+    void createShadowDescriptorSetLayout();
     void destroyDescriptorSetLayouts();
     void createDescriptorPool();
+    void createDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding> bindings, VkDescriptorSetLayout* pLayout);
 };

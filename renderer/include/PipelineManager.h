@@ -15,7 +15,8 @@ enum class PipelineType {
 	None,
 	Mesh,
 	Text,
-  Skybox
+  Skybox,
+  Depth
 };
 
 // Define array to be able to iterate over all PipelineTypes

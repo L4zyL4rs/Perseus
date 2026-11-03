@@ -1,8 +1,10 @@
 #version 450
 
 struct LightSource {
-    vec4 pos;
-    vec4 col;
+  vec4 pos;
+  vec4 col;
+  mat4 view;
+  mat4 proj;
 };
 
 layout(binding = 0) uniform GlobalUniformBufferObject {

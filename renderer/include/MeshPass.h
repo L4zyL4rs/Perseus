@@ -24,19 +24,29 @@ public:
   ImageManager &manager;
   ImageHandle colorHandle;
   ImageHandle depthHandle;
-  std::vector<DrawItem>* items;
+  std::vector<DrawItem> items;
 
   MeshPass(ImageManager &imageManager)
       : manager(imageManager) {}
 
-  ~MeshPass() override {}
+  ~MeshPass() override = default;
 
   void setAttachments(ImageHandle color, ImageHandle depth) {
     colorHandle = color;
     depthHandle = depth;
   }
 
-  void setDrawItems(std::vector<DrawItem>* newItems) override { items = newItems ; }
+  void setDrawItems(std::vector<DrawItem> newItems) override {
+    items = newItems;
+  }
+
+  void addDrawItem(const DrawItem& item) {
+    items.emplace_back(item);
+  }
+
+  void clearDrawItems() {
+    items.clear();
+  }
 
   void prepare() override {}
 
@@ -47,7 +57,9 @@ public:
   void execute(VkCommandBuffer cmd, PipelineManager &pipelineManager) override {
     beginRendering(cmd);
     setViewportScissor(cmd);
-    drawDrawItems(cmd, *items, pipelineManager);
+    for(auto& item : items) {
+      drawDrawItem(cmd, item, pipelineManager);
+    }
     vkCmdEndRendering(cmd);
   }
 
@@ -55,15 +67,15 @@ public:
     manager.sync(cmd, colorHandle,
                  VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
                  VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT |
-                 VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+                     VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
     manager.sync(cmd, depthHandle,
                  VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT |
                      VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
                  VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
                      VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT);
 
-    //std::cout << "Using extent with " << manager.swapExtent.height << " x "
-    //          << manager.swapExtent.width << "\n";
+    // std::cout << "Using extent with " << manager.swapExtent.height << " x "
+    //           << manager.swapExtent.width << "\n";
 
     VkRenderingAttachmentInfo colorAttachmentInfo{};
     colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
@@ -109,4 +121,5 @@ public:
     scissor.extent = manager.swapExtent;
     vkCmdSetScissor(cmd, 0, 1, &scissor);
   }
+
 };

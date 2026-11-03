@@ -3,6 +3,8 @@
 struct LightSource {
     vec4 pos;
     vec4 col;
+    mat4 lightView;
+    mat4 lightProj;
 };
 
 layout(binding = 0) uniform GlobalUniformBufferObject {

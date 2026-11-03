@@ -5,6 +5,8 @@
 #include "ImageManager.h"
 #include "MeshPass.h"
 #include "SkyPass.h"
+#include "ShadowPass.h"
+#include "SceneState.h"
 
 extern uint32_t MAX_OBJECTS;
 
@@ -23,13 +25,16 @@ public:
     ImageManager& imageManager;
     MeshPass meshPass;
     SkyPass skyPass;
+    ShadowPass shadowPass;
     std::vector<VkCommandBuffer> commandBuffers{};
     std::vector<VkSemaphore> imageAvailableSemaphores{};
     std::vector<VkSemaphore> renderFinishedSemaphores{};
     std::vector<VkFence> inFlightFences{};
+    std::vector<DrawItem> drawItems;
     std::thread physicsThread{};
     uint32_t currentFrame = 0;
     std::atomic<bool> MAIN_LOOP_RUNNING = false;
+    SceneState sceneState;
 
     FrameManager(Swapchain* s);
     void cleanup();
@@ -44,6 +49,8 @@ private:
     void transitionLayoutRender(uint32_t imageIndex);
     void resolve(VkCommandBuffer cmd, uint32_t imageIndex);
     void setupSkypassPipeline();
+    void setupShadowpassPipeline();
     void recreateSwapchain();
     void setupRenderpasses();
+    void assembleDrawItems(FrameRenderInfo& renderInfo);
 };

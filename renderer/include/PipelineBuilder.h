@@ -19,6 +19,7 @@ class PipelineBuilder {
   VkPipelineRenderingCreateInfo renderingInfo{};
   VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+  VkPipelineColorBlendStateCreateInfo colorBlending{};
   VkPushConstantRange pushConstant{};
   uint32_t pushConstantRangeCount = 0;
 
