@@ -24,6 +24,7 @@ layout(location = 2) in vec4 fragNormal;
 layout(location = 3) in vec4 fragPos;
 
 layout(set = 1, binding = 1) uniform sampler2D texSampler;
+layout(set = 2, binding = 0) uniform sampler2D shadowMap;
 
 layout(push_constant) uniform constants {
     mat4 transform;
@@ -31,16 +32,26 @@ layout(push_constant) uniform constants {
 
 layout(location = 0) out vec4 outColor;
 
+float ambientLight = 0.05f;
+float bias = 0.008;
+
 void main() {
     outColor = vec4(0, 0, 0, 0);
    
     // Keep in mind lightCount is an ivec4 for alignment
     for(int i = 0; i < uboGlobal.lightCount.x; i++) {
-        LightSource source = uboGlobal.lightSources[i];
+        LightSource light = uboGlobal.lightSources[i];
+        vec4 lightClip = light.lightProj * light.lightView * fragPos;
+        vec3 lightNdc = lightClip.xyz / lightClip.w;
+        vec2 shadowUv = lightNdc.xy * 0.5 + 0.5;
 
-        vec4 lightDirection = normalize(source.pos - fragPos);
-        outColor += vec4((0.8 * dot(lightDirection.xyz, fragNormal.xyz) + 0.0) * texture(texSampler, fragTexCoord).xyz * source.col.rgb * source.col.a, 0.8);
+        float storedDepth = texture(shadowMap, shadowUv).r;
+        float shadow = lightNdc.z - bias > storedDepth ? 1.0 : 0.0;
+
+        vec4 lightDirection = normalize(light.pos);
+        outColor += (1.0 - shadow) * vec4((0.8 * max(0.0f, dot(lightDirection.xyz, fragNormal.xyz)) + 0.0f) * texture(texSampler, fragTexCoord).xyz * light.col.rgb * light.col.a, 1.0);
     }
     outColor.rgb = outColor.rgb * fragColor;
+    outColor += ambientLight * texture(texSampler, fragTexCoord);
 }
 

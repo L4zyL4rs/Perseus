@@ -26,6 +26,7 @@ struct ImageAllocInfo {
 enum class ImageUsageType {
     ColorImage,
     DepthImage,
+    ShadowMap,
     Sampled
 };
 
@@ -59,6 +60,7 @@ public:
     void sync(VkCommandBuffer commandBuffer, ImageHandle handle, VkPipelineStageFlags2 stage, VkAccessFlags2 access);   // Make this easier to interface in the future:wa
     void recreateSwapchain();
     void recreateImage(ImageHandle handle);
+    VkExtent2D getExtent(ImageHandle handle);
 
 private:
     std::vector<Image> images{};

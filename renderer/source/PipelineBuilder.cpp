@@ -284,3 +284,7 @@ void PipelineBuilder::build() {
   manager->addPipeline(type, bundle);
   manager->pushConstantSizes[type] = pushConstant.size;
 }
+
+void PipelineBuilder::setSampleCount(VkSampleCountFlagBits samples) {
+  multisampling.rasterizationSamples = samples;
+}

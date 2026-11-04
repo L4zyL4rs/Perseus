@@ -20,8 +20,8 @@ public:
 
   glm::vec4 pos{};
   glm::vec4 col{};
-  glm::mat4 view{};
-  glm::mat4 proj{};
+  glm::mat4 view{1.0f};
+  glm::mat4 proj{1.0f};
 };
 
 

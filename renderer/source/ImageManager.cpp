@@ -27,24 +27,35 @@ ImageHandle ImageManager::allocate(ImageUsageType usage, std::string debugLabel)
     VkSampleCountFlagBits msaaSamples = context.msaaSamples;
     VkImageAspectFlags aspectMask;
     uint32_t mipLevels = 1;
+    bool extentIsSwapExtent = false;
 
     switch(usage) {
         case ImageUsageType::ColorImage:
             usageBits = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
             aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            extentIsSwapExtent = true;
             break;
         case ImageUsageType::DepthImage:
             format = VulkanHelper::findDepthFormat(context.physicalDevice);
             usageBits = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
             aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            extentIsSwapExtent = true;
+            break;
+        case ImageUsageType::ShadowMap:
+            format = VulkanHelper::findDepthFormat(context.physicalDevice);
+            usageBits = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+                        VK_IMAGE_USAGE_SAMPLED_BIT;
+            aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+            extent = {2048, 2048};
             break;
         default:
             throw std::logic_error("Cannot automatically allocate this image type");
     }       
     
     ImageHandle handle = allocate(usageBits, extent, format, msaaSamples, aspectMask, mipLevels, debugLabel);
-    images[handle].extentIsSwapExtent = true;
+    images[handle].extentIsSwapExtent = extentIsSwapExtent;
     return handle;
 }
 
@@ -147,6 +158,10 @@ VkImage ImageManager::getImg(ImageHandle handle) {
 
 VkImageView ImageManager::getView(ImageHandle handle) {
     return images[handle].view;
+}
+
+VkExtent2D ImageManager::getExtent(ImageHandle handle) {
+  return images[handle].allocInfo.extent;
 }
 
 void ImageManager::sync(VkCommandBuffer commandBuffer, ImageHandle handle, VkPipelineStageFlags2 stage, VkAccessFlags2 access) {

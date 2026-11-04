@@ -56,14 +56,14 @@ public:
             .with<TextElement128>(TextElement128(
                 "text", frameManager.assetManager.loadFont(robotoslab, 30),
                 glm::vec2(0, 0), glm::vec4(1))));
-    LightSource light1({10, 0, 0, 0}, {0, 1, 0, 0.01});
-    cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light1));
-    LightSource light2({0, 10, 0, 0}, {0, 0, 1, 0.01});
-    cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light2));
-    LightSource light3({0, 0, 10, 0}, {1, 0, 0, 0.01});
-    cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light3));
-    LightSource light4({0, 0, 10, 0}, {1, 1, 1, 0.7});
+    LightSource light4({5, 5, 5, 0}, {1, 1, 1, 0.7});
     cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light4));
+    //LightSource light1({10, 0, 0, 0}, {0, 1, 0, 0.01});
+    //cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light1));
+    //LightSource light2({0, 10, 0, 0}, {0, 0, 1, 0.01});
+    //cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light2));
+    //LightSource light3({0, 0, 10, 0}, {1, 0, 0, 0.01});
+    //cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light3));
 
     return cmd;
   }
@@ -307,7 +307,7 @@ private:
     bool lCtrlPressed = in.keys[static_cast<size_t>(Key::lCtrl)];
     bool escPressed = in.keys[static_cast<size_t>(Key::esc)];
 
-    const float cameraSpeed = 0.0005f * deltaTime;
+    const float cameraSpeed = 0.002f * deltaTime;
     //std::cout << "Cam speed " << cameraSpeed << "\n";
 
     if (wPressed) {
@@ -391,12 +391,27 @@ private:
   }
 
   void updateScene(float dt) {
+    LightSource& sun = lightSources.at(0);
+    glm::vec3 toSun = glm::normalize(glm::vec3(sun.pos));
+    glm::vec3 shadowCenter = glm::vec3(5, 5, 0);
+    glm::vec3 lightEye = shadowCenter + 20.0f * toSun;
+
+    sun.view = glm::lookAt(lightEye,
+                           shadowCenter,
+                           glm::vec3(0.0f, 1.0f, 0.0f));
+
+    sun.proj = glm::ortho(
+        -10.0f, 10.0f,
+        -10.0f, 10.0f,
+        0.1f, 50.0f);
+
+    sun.proj[1][1] *= -1.0f;
     updateCamera(dt);
 
     float angle = dt / 1000;
-    lightSources.at(0).pos = glm::rotateZ(lightSources.at(0).pos, angle);
-    lightSources.at(1).pos = glm::rotateX(lightSources.at(1).pos, angle);
-    lightSources.at(2).pos = glm::rotateY(lightSources.at(2).pos, angle);
+    //lightSources.at(0).pos = glm::rotateZ(lightSources.at(0).pos, angle);
+    //lightSources.at(1).pos = glm::rotateX(lightSources.at(1).pos, angle);
+    //lightSources.at(2).pos = glm::rotateY(lightSources.at(2).pos, angle);
 
   }
 

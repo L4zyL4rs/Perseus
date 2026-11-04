@@ -54,5 +54,6 @@ public:
   void setAttachmentFormats(uint32_t attachmentCount, VkFormat *colorFormats);
   void setAttachmentFormats(uint32_t attachmentCount, VkFormat *colorFormats,
                             VkFormat stencilFormat, VkFormat depthFormat);
+  void setSampleCount(VkSampleCountFlagBits samples);
   void build();
 };

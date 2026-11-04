@@ -44,6 +44,7 @@ void FrameManager::cleanup() {
   pipelineManager.cleanup();
   objectManager.cleanup();
   fontRenderer.cleanup();
+  vkDestroySampler(context->device, shadowSampler, nullptr); 
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     vkDestroySemaphore(context->device, imageAvailableSemaphores[i], nullptr);
@@ -81,7 +82,9 @@ void FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   // transitionLayoutRender(imageIndex);
 
   transitionLayoutRender(imageIndex);
-
+  
+  shadowPass.execute(commandBuffer, pipelineManager);
+  imageManager.sync(commandBuffer, shadow, VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT);
   skyPass.execute(commandBuffer, pipelineManager);
   meshPass.execute(commandBuffer, pipelineManager);
 
@@ -127,7 +130,7 @@ void FrameManager::draw(FrameRenderInfo& renderInfo) {
   sceneState.submit(currentFrame);
   assembleDrawItems(renderInfo);
   skyPass.setCamera(renderInfo.camForward, renderInfo.camUp, renderInfo.verticalFOV, renderInfo.horizontalFOV);
-  skyPass.setSunPosition(glm::normalize(glm::vec4(0, 0.3, 0.7, 0)));
+  skyPass.setSunPosition(glm::normalize(renderInfo.lights[0].pos));
 
   vkResetFences(context->device, 1, &inFlightFences[currentFrame]);
   vkResetCommandBuffer(commandBuffers[currentFrame], 0);
@@ -250,11 +253,12 @@ void FrameManager::assembleDrawItems(FrameRenderInfo& renderInfo) {
   const VkBuffer &vertexBuffer = assetManager.getVertexBuffer();
   const VkBuffer &indexBuffer = assetManager.getIndexBuffer();
 
-  std::vector<VkDescriptorSet> descriptors(2);
+  std::vector<VkDescriptorSet> descriptors(3);
   for(auto& obj : renderInfo.meshes) {
     const MeshResource &mesh = assetManager.getMesh(obj.mesh);
     descriptors[0] = sceneState.getDescriptor(currentFrame);
     descriptors[1] = assetManager.getDescriptors(mesh.texture)[currentFrame];
+    descriptors[2] = shadowDescriptor;
     
     item.descriptorSets = descriptors;
     item.transform = obj.transform;
@@ -265,8 +269,10 @@ void FrameManager::assembleDrawItems(FrameRenderInfo& renderInfo) {
     item.sortKey = 0;
 
     if(obj.flags.castsShadow) {
-      item.pipeline = PipelineType::Depth;
-      shadowPass.addDrawItem(item);
+      DrawItem shadowItem = item;
+      shadowItem.pipeline = PipelineType::Depth;
+      shadowItem.descriptorSets = {descriptors[0]};
+      shadowPass.addDrawItem(shadowItem);
     }
     
     item.pipeline = PipelineType::Mesh;
@@ -450,23 +456,59 @@ void FrameManager::setupShadowpassPipeline() {
   PipelineBuilder builder;
   builder.setDefaults(&pipelineManager, PipelineType::Depth);
   builder.setPipelineDebugLabel("Depth Pipeline");
-  builder.addVertShader("assets/shaders/meshVert.spv");
+  builder.addVertShader("assets/shaders/shadowVert.spv");
   builder.enablePushConstants(sizeof(MeshPushConstant), VK_SHADER_STAGE_VERTEX_BIT);
   builder.addDescriptor(descriptorAllocator.layouts.camera);
-  builder.addDescriptor(descriptorAllocator.layouts.meshAndSampler);
   builder.setVertexFormat(Vertex::getBindingDescription(), Vertex::getAttributeDescriptions());
   builder.enableDepthWrite();
   builder.setAttachmentFormats(0, nullptr, VK_FORMAT_UNDEFINED, VulkanHelper::findDepthFormat(context->physicalDevice));
+  builder.setSampleCount(VK_SAMPLE_COUNT_1_BIT);
   builder.build();
 }
 
+void FrameManager::setupShadowDescriptor(ImageHandle shadowMap) {
+  VkSamplerCreateInfo info{};
+  info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  info.magFilter = VK_FILTER_NEAREST;
+  info.minFilter = VK_FILTER_NEAREST;
+  info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 
+  info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+  info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+  info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+  info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;  // No shadow outside of map
+
+  info.anisotropyEnable = VK_FALSE;
+  info.compareEnable = VK_FALSE;
+  info.minLod = 0.0f;
+  info.maxLod = 0.0f;
+  vkCreateSampler(context->device, &info, nullptr, &shadowSampler);
+
+  descriptorAllocator.allocate(descriptorAllocator.layouts.shadows, &shadowDescriptor, 1, "Shadow descriptor");
+  
+  VkDescriptorImageInfo imageInfo{};
+  imageInfo.sampler = shadowSampler;
+  imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+  imageInfo.imageView = imageManager.getView(shadowMap);
+
+  VkWriteDescriptorSet write{};
+  write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write.dstSet = shadowDescriptor;
+  write.dstBinding = 0;
+  write.descriptorCount = 1;
+  write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  write.pImageInfo = &imageInfo;
+
+  vkUpdateDescriptorSets(context->device, 1, &write, 0, nullptr);
+}
 
 void FrameManager::setupRenderpasses() {
   ImageHandle color = imageManager.allocate(ImageUsageType::ColorImage, "Color image");
   ImageHandle depth = imageManager.allocate(ImageUsageType::DepthImage, "Depth image");
-  ImageHandle shadow = imageManager.allocate(ImageUsageType::DepthImage, "Depth image");
+  shadow = imageManager.allocate(ImageUsageType::ShadowMap, "Shadow map");
+  setupShadowDescriptor(shadow);
   setupSkypassPipeline();
+  setupShadowpassPipeline();
   skyPass.setAttachments(color);
   shadowPass.setAttachments(shadow);
   meshPass.setAttachments(color, depth);

@@ -63,8 +63,8 @@ std::vector<ecs::EntityBuilder> startScene(ecs::EntityManager& em, RenderSystem&
     
     
     scene.emplace_back(ecs::EntityBuilder(em).with<RenderObject>(RenderObject(glm::vec3(0), glm::vec3(0), rend.frameManager.assetManager.loadAsset(floor))));
-    scene.emplace_back(ecs::EntityBuilder(em).with<RenderObject>(RenderObject(glm::vec3(1,0,0), glm::vec3(0), rend.frameManager.assetManager.loadAsset(sphere))));
-    scene.emplace_back(ecs::EntityBuilder(em).with<RenderObject>(RenderObject(glm::vec3(0,-2,0), glm::vec3(0), rend.frameManager.assetManager.loadAsset(cube))));
+    scene.emplace_back(ecs::EntityBuilder(em).with<RenderObject>(RenderObject(glm::vec3(7,5,0.9), glm::vec3(0), rend.frameManager.assetManager.loadAsset(sphere))));
+    scene.emplace_back(ecs::EntityBuilder(em).with<RenderObject>(RenderObject(glm::vec3(3,4,0.5), glm::vec3(0), rend.frameManager.assetManager.loadAsset(cube))));
 
     scene.emplace_back(ecs::EntityBuilder(em).with<TextElement128>(TextElement128(text, rend.frameManager.assetManager.loadFont(robotoslab, 30), glm::vec2(0.2, 0.2), glm::vec4(1))));
     scene.emplace_back(ecs::EntityBuilder(em).with<UserInput>(UserInput()));

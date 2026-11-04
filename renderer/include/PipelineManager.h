@@ -21,7 +21,10 @@ enum class PipelineType {
 
 // Define array to be able to iterate over all PipelineTypes
 // Weird way to do this if there are more PipelineTypes
-static const PipelineType allPipelineTypes[] = { PipelineType::Mesh, PipelineType::Text, PipelineType::Skybox};
+static const PipelineType allPipelineTypes[] = { PipelineType::Mesh, 
+                                                 PipelineType::Text, 
+                                                 PipelineType::Skybox, 
+                                                 PipelineType::Depth};
 
 // Define hash function for unordered_map of pipelines
 template <>

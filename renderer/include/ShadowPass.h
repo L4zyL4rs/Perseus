@@ -10,7 +10,7 @@ public:
   ShadowPass(ImageManager &imageManager)
       : manager(imageManager) {}
 
-  ~ShadowPass() override {}
+  ~ShadowPass() override = default;
 
   void setAttachments(ImageHandle shadowMap) { this->shadowMap = shadowMap; }
 
@@ -48,7 +48,7 @@ public:
     VkRenderingAttachmentInfo shadowAttachmentInfo{};
     shadowAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
     shadowAttachmentInfo.imageView = manager.getView(shadowMap);
-    shadowAttachmentInfo.resolveImageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    shadowAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     shadowAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     shadowAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     shadowAttachmentInfo.clearValue = {1.0, 0.0};
@@ -56,7 +56,7 @@ public:
     VkRenderingInfo renderInfo{};
     renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
     renderInfo.renderArea.offset = {0, 0};
-    renderInfo.renderArea.extent = manager.swapExtent;
+    renderInfo.renderArea.extent = manager.getExtent(shadowMap);
     renderInfo.layerCount = 1;
     renderInfo.colorAttachmentCount = 0;
     renderInfo.pColorAttachments = nullptr;
@@ -69,8 +69,8 @@ public:
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = static_cast<float>(manager.swapExtent.width);
-    viewport.height = static_cast<float>(manager.swapExtent.height);
+    viewport.width = static_cast<float>(manager.getExtent(shadowMap).width);
+    viewport.height = static_cast<float>(manager.getExtent(shadowMap).height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
@@ -78,7 +78,7 @@ public:
 
     VkRect2D scissor{};
     scissor.offset = {0, 0};
-    scissor.extent = manager.swapExtent;
+    scissor.extent = manager.getExtent(shadowMap);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
   }
 

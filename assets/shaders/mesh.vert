@@ -31,8 +31,9 @@ layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out vec4 fragPosition;
 
 void main() {
-    fragPosition = vec4(inPosition, 1.0f);
-    gl_Position = uboGlobal.proj * uboGlobal.view * pushConstant.transform * fragPosition;
+  vec4 worldPosition = pushConstant.transform * vec4(inPosition, 1.0f);
+    fragPosition = worldPosition;
+    gl_Position = uboGlobal.proj * uboGlobal.view * worldPosition;
     //gl_Position = pushConstant.transform * vec4(inPosition, 1.0f);
     fragColor = inColor;
     fragTexCoord = inTexCoord;

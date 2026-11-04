@@ -35,6 +35,9 @@ public:
     uint32_t currentFrame = 0;
     std::atomic<bool> MAIN_LOOP_RUNNING = false;
     SceneState sceneState;
+    VkSampler shadowSampler{};
+    ImageHandle shadow{};
+    VkDescriptorSet shadowDescriptor{};
 
     FrameManager(Swapchain* s);
     void cleanup();
@@ -53,4 +56,5 @@ private:
     void recreateSwapchain();
     void setupRenderpasses();
     void assembleDrawItems(FrameRenderInfo& renderInfo);
+    void setupShadowDescriptor(ImageHandle shadowMap);
 };
