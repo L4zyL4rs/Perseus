@@ -24,7 +24,7 @@ layout(location = 2) in vec4 fragNormal;
 layout(location = 3) in vec4 fragPos;
 
 layout(set = 1, binding = 1) uniform sampler2D texSampler;
-layout(set = 2, binding = 0) uniform sampler2D shadowMap;
+layout(set = 2, binding = 0) uniform sampler2DShadow shadowMap;
 
 layout(push_constant) uniform constants {
     mat4 transform;
@@ -34,6 +34,28 @@ layout(location = 0) out vec4 outColor;
 
 float ambientLight = 0.05f;
 float bias = 0.008;
+int shadowKernelSize = 2;
+
+
+float compareShadow(vec3 lightNdc) {
+  vec2 shadowUv = lightNdc.xy * 0.5 + 0.5;
+  float visibility = texture(shadowMap, vec3(shadowUv, lightNdc.z -bias));
+  return visibility;
+}
+
+float smoothShadow(vec3 lightNdc) {
+  float shadow = 0;
+  vec2 shadowTexelSize = 1.0f / (textureSize(shadowMap, 0));
+
+  for(int x = -shadowKernelSize; x <= shadowKernelSize; x++) {
+    for(int y = -shadowKernelSize; y <= shadowKernelSize; y++) {
+      shadow += compareShadow(lightNdc + vec3(x * shadowTexelSize.x, y * shadowTexelSize.y, 0));
+    }
+  }
+  shadow /= 1.0f * (2*shadowKernelSize + 1)*(2*shadowKernelSize + 1);
+  return shadow;
+}
+
 
 void main() {
     outColor = vec4(0, 0, 0, 0);
@@ -43,10 +65,8 @@ void main() {
         LightSource light = uboGlobal.lightSources[i];
         vec4 lightClip = light.lightProj * light.lightView * fragPos;
         vec3 lightNdc = lightClip.xyz / lightClip.w;
-        vec2 shadowUv = lightNdc.xy * 0.5 + 0.5;
 
-        float storedDepth = texture(shadowMap, shadowUv).r;
-        float shadow = lightNdc.z - bias > storedDepth ? 1.0 : 0.0;
+        float shadow = smoothShadow(lightNdc);
 
         vec4 lightDirection = normalize(light.pos);
         outColor += (1.0 - shadow) * vec4((0.8 * max(0.0f, dot(lightDirection.xyz, fragNormal.xyz)) + 0.0f) * texture(texSampler, fragTexCoord).xyz * light.col.rgb * light.col.a, 1.0);
@@ -55,3 +75,4 @@ void main() {
     outColor += ambientLight * texture(texSampler, fragTexCoord);
 }
 
+  

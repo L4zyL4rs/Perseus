@@ -469,8 +469,8 @@ void FrameManager::setupShadowpassPipeline() {
 void FrameManager::setupShadowDescriptor(ImageHandle shadowMap) {
   VkSamplerCreateInfo info{};
   info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  info.magFilter = VK_FILTER_NEAREST;
-  info.minFilter = VK_FILTER_NEAREST;
+  info.magFilter = VK_FILTER_LINEAR;
+  info.minFilter = VK_FILTER_LINEAR;
   info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 
   info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
@@ -479,7 +479,8 @@ void FrameManager::setupShadowDescriptor(ImageHandle shadowMap) {
   info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;  // No shadow outside of map
 
   info.anisotropyEnable = VK_FALSE;
-  info.compareEnable = VK_FALSE;
+  info.compareEnable = VK_TRUE;
+  info.compareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
   info.minLod = 0.0f;
   info.maxLod = 0.0f;
   vkCreateSampler(context->device, &info, nullptr, &shadowSampler);
