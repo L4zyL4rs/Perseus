@@ -5,6 +5,7 @@ struct LightSource {
   vec4 col;
   mat4 view;
   mat4 proj;
+  uint hasShadowMap;
 };
 
 layout(binding = 0) uniform GlobalUniformBufferObject {

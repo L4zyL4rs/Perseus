@@ -8,7 +8,7 @@ enum class LightSourceType {
   Directional
 };
 
-struct LightSource {
+struct alignas(16) LightSource {
 public:
   void updatePos(glm::vec4 newPos) {
     pos = newPos;
@@ -22,6 +22,7 @@ public:
   glm::vec4 col{};
   glm::mat4 view{1.0f};
   glm::mat4 proj{1.0f};
+  uint32_t hasShadowmap = 0u;
 };
 
 

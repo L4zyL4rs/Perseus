@@ -5,6 +5,7 @@ struct LightSource {
     vec4 col;
     mat4 lightView;
     mat4 lightProj;
+    uint hasShadowMap;
 };
 
 layout(binding = 0) uniform GlobalUniformBufferObject {
@@ -32,7 +33,7 @@ layout(push_constant) uniform constants {
 
 layout(location = 0) out vec4 outColor;
 
-float ambientLight = 0.05f;
+float ambientLight = 0.02f;
 float bias = 0.008;
 int shadowKernelSize = 2;
 
@@ -63,10 +64,12 @@ void main() {
     // Keep in mind lightCount is an ivec4 for alignment
     for(int i = 0; i < uboGlobal.lightCount.x; i++) {
         LightSource light = uboGlobal.lightSources[i];
-        vec4 lightClip = light.lightProj * light.lightView * fragPos;
-        vec3 lightNdc = lightClip.xyz / lightClip.w;
-
-        float shadow = smoothShadow(lightNdc);
+        float shadow = 0.0f;
+        if(light.hasShadowMap != 0u) {
+          vec4 lightClip = light.lightProj * light.lightView * fragPos;
+          vec3 lightNdc = lightClip.xyz / lightClip.w;
+          shadow = smoothShadow(lightNdc);
+        }
 
         vec4 lightDirection = normalize(light.pos);
         outColor += (1.0 - shadow) * vec4((0.8 * max(0.0f, dot(lightDirection.xyz, fragNormal.xyz)) + 0.0f) * texture(texSampler, fragTexCoord).xyz * light.col.rgb * light.col.a, 1.0);

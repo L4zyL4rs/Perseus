@@ -56,14 +56,15 @@ public:
             .with<TextElement128>(TextElement128(
                 "text", frameManager.assetManager.loadFont(robotoslab, 30),
                 glm::vec2(0, 0), glm::vec4(1))));
-    LightSource light4({5, 5, 5, 0}, {1, 1, 1, 0.7});
+    LightSource light4({5, 5, 5, 0}, {1, 1, 1, 0.17});
+    light4.hasShadowmap = 1u;
     cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light4));
-    //LightSource light1({10, 0, 0, 0}, {0, 1, 0, 0.01});
-    //cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light1));
-    //LightSource light2({0, 10, 0, 0}, {0, 0, 1, 0.01});
-    //cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light2));
-    //LightSource light3({0, 0, 10, 0}, {1, 0, 0, 0.01});
-    //cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light3));
+    LightSource light1({10, 0, 0, 0}, {0, 1, 0, 0.61});
+    cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light1));
+    LightSource light2({0, 10, 0, 0}, {0, 0, 1, 0.11});
+    cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light2));
+    LightSource light3({2, 2, 3, 0}, {1, 0, 0, 0.61});
+    cmd.emplace_back(ecs::EntityBuilder(entityManager).with(light3));
 
     return cmd;
   }
@@ -103,7 +104,7 @@ private:
     gatherCameraData();
     gatherLights();
     gatherRenderInstances();
-    gatherLights();
+    //gatherLights();
   }
 
   void gatherRenderInstances() {
@@ -409,9 +410,9 @@ private:
     updateCamera(dt);
 
     float angle = dt / 1000;
-    //lightSources.at(0).pos = glm::rotateZ(lightSources.at(0).pos, angle);
-    //lightSources.at(1).pos = glm::rotateX(lightSources.at(1).pos, angle);
-    //lightSources.at(2).pos = glm::rotateY(lightSources.at(2).pos, angle);
+    lightSources.at(1).pos = glm::rotateZ(lightSources.at(0).pos, angle);
+    lightSources.at(2).pos = glm::rotateX(lightSources.at(1).pos, angle);
+    lightSources.at(3).pos = glm::rotateY(lightSources.at(2).pos, angle);
 
   }
 
